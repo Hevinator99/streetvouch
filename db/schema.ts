@@ -147,3 +147,21 @@ export const auditEvents = sqliteTable("audit_events", {
   detail: text("detail"),
   createdAt: text("created_at").notNull(),
 }, table => [index("idx_audit_events_business_created").on(table.businessId, table.createdAt)]);
+
+export const aiAnalyses = sqliteTable("ai_analyses", {
+  id: text("id").primaryKey(),
+  businessId: text("business_id").notNull().references(() => businesses.id),
+  sourceType: text("source_type", { enum: ["feedback", "google_review"] }).notNull(),
+  sourceId: text("source_id").notNull(),
+  urgency: text("urgency", { enum: ["routine", "attention", "urgent", "critical"] }).notNull(),
+  confidence: integer("confidence").notNull(),
+  sentiment: text("sentiment", { enum: ["positive", "mixed", "negative", "neutral"] }).notNull(),
+  themes: text("themes").notNull(),
+  recommendedAction: text("recommended_action").notNull(),
+  draftReply: text("draft_reply").notNull(),
+  rationale: text("rationale").notNull(),
+  model: text("model").notNull(),
+  status: text("status", { enum: ["suggested", "accepted", "edited", "dismissed"] }).notNull().default("suggested"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, table => [uniqueIndex("idx_ai_analyses_source").on(table.businessId, table.sourceType, table.sourceId), index("idx_ai_analyses_urgency").on(table.businessId, table.urgency)]);

@@ -1,4 +1,21 @@
-/* eslint-disable @next/next/no-html-link-for-pages */
-export const metadata={title:"Privacy · StreetVouch",description:"How StreetVouch handles customer feedback."};
+import Link from "next/link";
 
-export default function PrivacyPage(){return <><link rel="stylesheet" href="/privacy.css"/><main className="privacy-shell"><a className="privacy-brand" href="/"><span>✓</span>streetvouch</a><article><span className="privacy-kicker">PRIVACY NOTICE</span><h1>Your feedback stays private.</h1><p className="privacy-lead">This notice explains how information submitted through the Village Barbers Cobham feedback page is used during the StreetVouch pilot.</p><section><h2>Who receives it</h2><p>Private feedback is made available to the authorised Village Barbers Cobham management team. StreetVouch processes and stores it to operate the feedback service.</p></section><section><h2>What we collect</h2><p>We collect the message, submission time and the business it relates to. A name is optional. An email address is collected only when you ask the team to reply.</p></section><section><h2>Why we collect it</h2><p>The information is used to help the shop understand customer experiences, respond when requested, resolve problems and produce summary reporting.</p></section><section><h2>How long we keep it</h2><p>Pilot feedback and related activity records are retained for no longer than 12 months, unless they need to be retained for a legal or safeguarding reason. Older records are deleted automatically.</p></section><section><h2>Google reviews</h2><p>If you choose to leave a Google review, you continue to Google and their privacy terms apply. StreetVouch records that the button was selected, but does not receive the contents of your Google account.</p></section><section><h2>Request access or deletion</h2><p>Ask Village Barbers Cobham to identify and delete your private submission. If you requested a response, use the same email address so the team can locate it.</p></section><p className="privacy-note">Last updated 16 September 2026. This pilot notice should be reviewed with the participating business before the stand is placed in the shop.</p><a className="privacy-back" href="/village-barbers-cobham">← Return to Village Barbers</a></article></main></>}
+export const metadata = { title: "Privacy · StreetVouch", description: "How StreetVouch handles customer feedback." };
+
+export default function PrivacyPage() {
+  return <><link rel="stylesheet" href="/privacy.css" /><main className="privacy-shell">
+    <Link className="privacy-brand" href="/"><span>✓</span>streetvouch</Link>
+    <article><span className="privacy-kicker">PRIVACY NOTICE</span><h1>Your feedback stays private.</h1>
+      <p className="privacy-lead">This notice explains how information submitted through the Village Barbers Cobham feedback page is used during the StreetVouch pilot.</p>
+      <section><h2>Who receives it</h2><p>Private feedback is made available to the authorised Village Barbers Cobham management team. StreetVouch processes and stores it to operate the feedback service.</p></section>
+      <section><h2>What we collect</h2><p>We collect the message, submission time and the business it relates to. A name is optional. An email address is collected only when you ask the team to reply.</p></section>
+      <section><h2>Why we collect it</h2><p>The information is used to help the shop understand customer experiences, respond when requested, resolve problems and produce summary reporting.</p></section>
+      <section><h2>Assisted analysis</h2><p>StreetVouch may use automated tools to identify themes, flag possible urgency and draft a suggested response. Customer names and email addresses are not sent for this analysis. A manager reviews the result, and no suggested reply is sent automatically.</p></section>
+      <section><h2>How long we keep it</h2><p>Pilot feedback and related activity records are retained for no longer than 12 months, unless they need to be retained for a legal or safeguarding reason. Older records are deleted automatically.</p></section>
+      <section><h2>Google reviews</h2><p>If you choose to leave a Google review, you continue to Google and their privacy terms apply. StreetVouch records that the button was selected, but does not receive the contents of your Google account.</p></section>
+      <section><h2>Request access or deletion</h2><p>Ask Village Barbers Cobham to identify and delete your private submission. If you requested a response, use the same email address so the team can locate it.</p></section>
+      <p className="privacy-note">Last updated 16 September 2026. This pilot notice should be reviewed with the participating business before the stand is placed in the shop.</p>
+      <Link className="privacy-back" href="/village-barbers-cobham">← Return to Village Barbers</Link>
+    </article>
+  </main></>;
+}
