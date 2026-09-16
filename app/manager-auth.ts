@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { cookies } from "next/headers";
 
 export const MANAGER_COOKIE = "sv_manager_session";
-const PASSWORD_ITERATIONS = 120000;
+const PASSWORD_ITERATIONS = 100000;
 
 export async function hashToken(token:string){const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));return [...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,"0")).join("");}
 export function randomHex(bytes=16){const values=crypto.getRandomValues(new Uint8Array(bytes));return [...values].map(v=>v.toString(16).padStart(2,"0")).join("");}
