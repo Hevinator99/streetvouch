@@ -22,6 +22,13 @@
       "when": 1789556540307,
       "tag": "0002_rainy_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789558165303,
+      "tag": "0003_wet_taskmaster",
+      "breakpoints": true
     }
   ]
 }

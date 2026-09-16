@@ -2,8 +2,13 @@ import { env } from "cloudflare:workers";
 import { cookies } from "next/headers";
 
 export const MANAGER_COOKIE = "sv_manager_session";
+const PASSWORD_ITERATIONS = 120000;
 
 export async function hashToken(token:string){const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));return [...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,"0")).join("");}
+export function randomHex(bytes=16){const values=crypto.getRandomValues(new Uint8Array(bytes));return [...values].map(v=>v.toString(16).padStart(2,"0")).join("");}
+export async function hashPassword(password:string,salt:string){const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]);const bits=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:new TextEncoder().encode(salt),iterations:PASSWORD_ITERATIONS},key,256);return [...new Uint8Array(bits)].map(v=>v.toString(16).padStart(2,"0")).join("");}
+export function safeEqual(left:string,right:string){if(left.length!==right.length)return false;let result=0;for(let i=0;i<left.length;i++)result|=left.charCodeAt(i)^right.charCodeAt(i);return result===0;}
+export async function createManagerSession(database:D1Database,managerUserId:string){const now=new Date(),token=crypto.randomUUID()+crypto.randomUUID().replaceAll("-",""),hash=await hashToken(token),expires=new Date(now.getTime()+7*86400000).toISOString();await database.prepare("INSERT INTO manager_sessions (token_hash,manager_user_id,expires_at,created_at,last_seen_at) VALUES (?,?,?,?,?)").bind(hash,managerUserId,expires,now.toISOString(),now.toISOString()).run();return token;}
 
 export type ManagerSession={managerUserId:string;businessId:string;email:string;displayName:string|null;role:string;businessName:string;businessSlug:string};
 
