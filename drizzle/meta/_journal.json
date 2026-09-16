@@ -43,6 +43,13 @@
       "when": 1789561202824,
       "tag": "0005_smooth_joystick",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789562701618,
+      "tag": "0006_faithful_shiva",
+      "breakpoints": true
     }
   ]
 }

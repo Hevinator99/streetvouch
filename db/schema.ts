@@ -8,6 +8,10 @@ export const businesses = sqliteTable("businesses", {
   ownerEmail: text("owner_email"),
   baselineGoogleReviews: integer("baseline_google_reviews").notNull().default(7),
   currentGoogleReviews: integer("current_google_reviews").notNull().default(7),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  reportEmail: text("report_email"),
+  reportDay: integer("report_day").notNull().default(1),
+  lastReportSentAt: text("last_report_sent_at"),
   createdAt: text("created_at").notNull(),
 });
 
@@ -19,6 +23,8 @@ export const feedback = sqliteTable("feedback", {
   contactRequested: integer("contact_requested", { mode: "boolean" }).notNull().default(false),
   severity: text("severity", { enum: ["normal", "attention", "serious"] }).notNull().default("normal"),
   status: text("status", { enum: ["new", "reviewed", "resolved"] }).notNull().default("new"),
+  contactedAt: text("contacted_at"),
+  internalNote: text("internal_note"),
   createdAt: text("created_at").notNull(), reviewedAt: text("reviewed_at"), resolvedAt: text("resolved_at"),
 }, table => [index("idx_feedback_business_created").on(table.businessId, table.createdAt), index("idx_feedback_business_status").on(table.businessId, table.status)]);
 
@@ -118,3 +124,25 @@ export const reviewAutomationSettings = sqliteTable("review_automation_settings"
   tone: text("tone").notNull().default("warm, local and concise"),
   updatedAt: text("updated_at").notNull(),
 });
+
+export const reportDeliveries = sqliteTable("report_deliveries", {
+  id: text("id").primaryKey(),
+  businessId: text("business_id").notNull().references(() => businesses.id),
+  recipientEmail: text("recipient_email").notNull(),
+  status: text("status", { enum: ["sent", "failed"] }).notNull(),
+  periodStart: text("period_start").notNull(),
+  periodEnd: text("period_end").notNull(),
+  error: text("error"),
+  createdAt: text("created_at").notNull(),
+}, table => [index("idx_report_deliveries_business_created").on(table.businessId, table.createdAt)]);
+
+export const auditEvents = sqliteTable("audit_events", {
+  id: text("id").primaryKey(),
+  businessId: text("business_id").notNull().references(() => businesses.id),
+  actorEmail: text("actor_email"),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id"),
+  detail: text("detail"),
+  createdAt: text("created_at").notNull(),
+}, table => [index("idx_audit_events_business_created").on(table.businessId, table.createdAt)]);
