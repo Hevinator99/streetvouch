@@ -2,7 +2,7 @@
   if (!location.pathname.startsWith('/village-barbers-cobham') && !location.pathname.startsWith('/t/JB001')) return;
   const business = 'village-barbers-cobham';
   const reviewUrl = 'https://www.google.com/search?q=Village+Barbers+Cobham#lrd=0x4875df983e87e645:0xff91360ffce80202,3,,,,';
-  const poweredLive = '<div class="powered">Feedback made simple with <a class="brand" href="/"><span class="mark" aria-hidden="true">✓</span>streetvouch</a></div>';
+  const poweredLive = '<div class="powered">Feedback made simple with <a class="brand" href="/"><span class="mark" aria-hidden="true">✓</span>streetvouch</a> · <a href="/privacy">Privacy</a></div>';
   let session = sessionStorage.getItem('sv_session');
   if (!session) { session = crypto.randomUUID(); sessionStorage.setItem('sv_session', session); }
   const track = event => fetch('/api/track', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ event, business, session }), keepalive: true }).catch(() => {});

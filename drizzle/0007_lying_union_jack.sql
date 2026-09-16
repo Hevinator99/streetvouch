@@ -1,0 +1,1 @@
+ALTER TABLE `report_deliveries` ADD `snapshot` text;

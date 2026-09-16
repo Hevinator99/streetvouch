@@ -5,6 +5,7 @@ export async function POST(request:Request){
   const body=await request.json() as {id?:string;status?:string;action?:string;note?:string};if(!body.id)return json({ok:false},400);
   const database=db(),now=new Date().toISOString();
   if(body.action==="delete"){
+    const owned=await database.prepare("SELECT id FROM feedback WHERE id=? AND business_id=?").bind(body.id,session.businessId).first();if(!owned)return json({ok:false,message:"Feedback not found."},404);
     await database.batch([database.prepare("DELETE FROM notifications WHERE feedback_id=?").bind(body.id),database.prepare("DELETE FROM feedback WHERE id=? AND business_id=?").bind(body.id,session.businessId),database.prepare("INSERT INTO audit_events (id,business_id,actor_email,action,entity_type,entity_id,created_at) VALUES (?,?,?,?,?,?,?)").bind(crypto.randomUUID(),session.businessId,session.email,"deleted","feedback",body.id,now)]);
     return json({ok:true});
   }

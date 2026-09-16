@@ -133,6 +133,7 @@ export const reportDeliveries = sqliteTable("report_deliveries", {
   periodStart: text("period_start").notNull(),
   periodEnd: text("period_end").notNull(),
   error: text("error"),
+  snapshot: text("snapshot"),
   createdAt: text("created_at").notNull(),
 }, table => [index("idx_report_deliveries_business_created").on(table.businessId, table.createdAt)]);
 
