@@ -55,6 +55,9 @@ export const managerUsers = sqliteTable("manager_users", {
 export const managerLoginTokens = sqliteTable("manager_login_tokens", {
   tokenHash: text("token_hash").primaryKey(),
   managerUserId: text("manager_user_id").notNull().references(() => managerUsers.id),
+  purpose: text("purpose", { enum: ["reset", "signup"] }).notNull().default("reset"),
+  pendingPasswordHash: text("pending_password_hash"),
+  pendingPasswordSalt: text("pending_password_salt"),
   expiresAt: text("expires_at").notNull(),
   usedAt: text("used_at"),
   createdAt: text("created_at").notNull(),
