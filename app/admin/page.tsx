@@ -32,6 +32,7 @@ export default async function AdminPage(){
 <p>Last seven days and all private feedback.</p>
 </div>
 <div className="title-actions">
+<a className="export" href="/manager/village-barbers-cobham">Manager dashboard</a>
 <button id="send-summary" className="export">Email weekly summary</button>
 <a className="export" href="/api/admin/export">Export CSV</a>
 </div>

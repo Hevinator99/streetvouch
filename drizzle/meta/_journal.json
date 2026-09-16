@@ -15,6 +15,13 @@
       "when": 1789552596081,
       "tag": "0001_talented_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789556540307,
+      "tag": "0002_rainy_reavers",
+      "breakpoints": true
     }
   ]
 }

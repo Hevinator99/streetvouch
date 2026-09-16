@@ -5,5 +5,8 @@ declare namespace Cloudflare {
     RESEND_API_KEY?: string;
     OWNER_EMAIL?: string;
     EMAIL_FROM?: string;
+    GOOGLE_CLIENT_ID?: string;
+    GOOGLE_CLIENT_SECRET?: string;
+    GOOGLE_TOKEN_ENCRYPTION_KEY?: string;
   }
 }
