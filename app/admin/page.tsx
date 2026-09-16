@@ -2,11 +2,11 @@ import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Script from "next/script";
-import { BUSINESS, ensureBusiness } from "../api/_shared";
+import { ADMIN_EMAIL, BUSINESS, ensureBusiness } from "../api/_shared";
 export const dynamic="force-dynamic";
 type Feedback={id:string;customer_name:string|null;customer_email:string|null;message:string;contact_requested:number;severity:string;status:string;created_at:string};
 export default async function AdminPage(){
-  const h=await headers(),userId=h.get("oai-authenticated-user-id");if(!userId)redirect("/signin-with-chatgpt?return_to=%2Fadmin");if(userId!=="bf16090f-d839-4fe3-af32-985f8f6514e1")return <main className="admin-denied">
+  const h=await headers(),userEmail=h.get("oai-authenticated-user-email")?.toLowerCase();if(!userEmail)redirect("/signin-with-chatgpt?return_to=%2Fadmin");if(userEmail!==ADMIN_EMAIL)return <main className="admin-denied">
 <h1>Access restricted</h1>
 <p>This management page is available only to the StreetVouch pilot administrator.</p>
 </main>;

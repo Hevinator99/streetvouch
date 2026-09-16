@@ -13,4 +13,5 @@ export async function allow(database: D1Database, key: string, limit: number, se
   if (!row || now-row.window_start>=seconds) { await database.prepare("INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, 1) ON CONFLICT(key) DO UPDATE SET window_start = excluded.window_start, count = 1").bind(key,now).run(); return true; }
   if (row.count>=limit) return false; await database.prepare("UPDATE rate_limits SET count = count + 1 WHERE key = ?").bind(key).run(); return true;
 }
-export function adminAllowed(headers: Headers) { return headers.get("oai-authenticated-user-id") === "bf16090f-d839-4fe3-af32-985f8f6514e1"; }
+export const ADMIN_EMAIL = "hevarnier@gmail.com";
+export function adminAllowed(headers: Headers) { return headers.get("oai-authenticated-user-email")?.toLowerCase() === ADMIN_EMAIL; }
