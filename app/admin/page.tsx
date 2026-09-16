@@ -2,15 +2,15 @@ import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Script from "next/script";
-import { ADMIN_EMAIL, BUSINESS, ensureBusiness } from "../api/_shared";
+import { adminAllowed, BUSINESS, ensureBusiness, enforceRetention } from "../api/_shared";
 export const dynamic="force-dynamic";
 type Feedback={id:string;customer_name:string|null;customer_email:string|null;message:string;contact_requested:number;severity:string;status:string;created_at:string};
 export default async function AdminPage(){
-  const h=await headers(),userEmail=h.get("oai-authenticated-user-email")?.toLowerCase();if(!userEmail)redirect("/signin-with-chatgpt?return_to=%2Fadmin");if(userEmail!==ADMIN_EMAIL)return <main className="admin-denied">
+  const h=await headers(),userEmail=h.get("oai-authenticated-user-email")?.toLowerCase();if(!userEmail)redirect("/signin-with-chatgpt?return_to=%2Fadmin");if(!adminAllowed(h))return <main className="admin-denied">
 <h1>Access restricted</h1>
 <p>This management page is available only to the StreetVouch pilot administrator.</p>
 </main>;
-  if(!env.DB)throw new Error("Database unavailable");await ensureBusiness(env.DB);const since=new Date(Date.now()-7*86400000).toISOString();
+  if(!env.DB)throw new Error("Database unavailable");await ensureBusiness(env.DB);await enforceRetention(env.DB);const since=new Date(Date.now()-7*86400000).toISOString();
   const [feedbackResult,eventResult,business]=await Promise.all([env.DB.prepare("SELECT * FROM feedback WHERE business_id=? ORDER BY created_at DESC LIMIT 250").bind(BUSINESS.id).all<Feedback>(),env.DB.prepare("SELECT event_type,COUNT(*) count FROM events WHERE business_id=? AND created_at>=? GROUP BY event_type").bind(BUSINESS.id,since).all<{event_type:string;count:number}>(),env.DB.prepare("SELECT baseline_google_reviews,current_google_reviews FROM businesses WHERE id=?").bind(BUSINESS.id).first<{baseline_google_reviews:number;current_google_reviews:number}>()]);
   const counts=Object.fromEntries(eventResult.results.map(r=>[r.event_type,r.count]));const items=feedbackResult.results;const newCount=items.filter(x=>x.status==="new").length,contact=items.filter(x=>x.contact_requested).length,serious=items.filter(x=>x.severity==="serious").length,googleGain=(business?.current_google_reviews??7)-(business?.baseline_google_reviews??7);
   return <>

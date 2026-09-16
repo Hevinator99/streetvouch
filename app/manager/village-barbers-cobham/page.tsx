@@ -1,14 +1,14 @@
 import { env } from "cloudflare:workers";
 import Script from "next/script";
 import { BUSINESS, ensureBusiness } from "../../api/_shared";
-import { getManagerSession } from "../../manager-auth";
+import { getManagerSession, getPasswordResetSession } from "../../manager-auth";
+import { syncGoogleReviews } from "../../google";
 export const dynamic="force-dynamic";
 type Feedback={id:string;customer_name:string|null;customer_email:string|null;message:string;contact_requested:number;severity:string;status:string;created_at:string};
 type GoogleReview={id:string;reviewer_name:string|null;rating:number;comment:string|null;google_created_at:string;reply_status:string;suggested_reply:string|null};
 export default async function ManagerDashboard({searchParams}:{searchParams:Promise<Record<string,string|undefined>>}){
-  if(!env.DB)throw new Error("Database unavailable");await ensureBusiness(env.DB);const session=await getManagerSession(),params=await searchParams;
-  if(!session)return <ManagerSignIn/>;if(session.businessId!==BUSINESS.id)return <main className="manager-denied"><h1>Access restricted</h1><p>This account does not have access to Village Barbers Cobham.</p></main>;
-  const password=await env.DB.prepare("SELECT password_hash FROM manager_users WHERE id=?").bind(session.managerUserId).first<{password_hash:string|null}>();if(!password?.password_hash||params.password==="reset")return <PasswordSetup/>;
+  if(!env.DB)throw new Error("Database unavailable");await ensureBusiness(env.DB);const params=await searchParams,session=await getManagerSession(),resetSession=params.password==="reset"?await getPasswordResetSession():null;
+  if(resetSession)return <PasswordSetup/>;if(!session)return <ManagerSignIn/>;if(session.businessId!==BUSINESS.id)return <main className="manager-denied"><h1>Access restricted</h1><p>This account does not have access to Village Barbers Cobham.</p></main>;const stale=await env.DB.prepare("SELECT status,last_synced_at FROM google_connections WHERE business_id=?").bind(session.businessId).first<{status:string;last_synced_at:string|null}>();if(stale?.status==="connected"&&(!stale.last_synced_at||Date.now()-new Date(stale.last_synced_at).getTime()>15*60*1000)){try{await syncGoogleReviews(session.businessId)}catch(error){console.error("automatic_google_sync_failed",error)}}
   const since=new Date(Date.now()-7*86400000).toISOString();
   const [feedbackResult,eventResult,reviewsResult,connection]=await Promise.all([env.DB.prepare("SELECT * FROM feedback WHERE business_id=? ORDER BY created_at DESC LIMIT 100").bind(session.businessId).all<Feedback>(),env.DB.prepare("SELECT event_type,COUNT(*) count FROM events WHERE business_id=? AND created_at>=? GROUP BY event_type").bind(session.businessId,since).all<{event_type:string;count:number}>(),env.DB.prepare("SELECT * FROM google_reviews WHERE business_id=? ORDER BY google_created_at DESC LIMIT 100").bind(session.businessId).all<GoogleReview>(),env.DB.prepare("SELECT status,last_synced_at,last_error,google_location_title FROM google_connections WHERE business_id=?").bind(session.businessId).first<{status:string;last_synced_at:string|null;last_error:string|null;google_location_title:string|null}>()]);
   const feedback=feedbackResult.results,reviews=reviewsResult.results,counts=Object.fromEntries(eventResult.results.map(r=>[r.event_type,r.count])),newFeedback=feedback.filter(x=>x.status==="new").length,needsAttention=feedback.filter(x=>x.severity!=="normal"&&x.status!=="resolved").length,pendingReplies=reviews.filter(x=>x.reply_status==="none"||x.reply_status==="draft").length;

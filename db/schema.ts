@@ -69,6 +69,7 @@ export const managerSessions = sqliteTable("manager_sessions", {
   expiresAt: text("expires_at").notNull(),
   createdAt: text("created_at").notNull(),
   lastSeenAt: text("last_seen_at").notNull(),
+  scope: text("scope", { enum: ["full", "password_reset"] }).notNull().default("full"),
 }, table => [index("idx_manager_sessions_user").on(table.managerUserId)]);
 
 export const googleConnections = sqliteTable("google_connections", {

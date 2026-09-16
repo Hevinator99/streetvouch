@@ -1,0 +1,1 @@
+ALTER TABLE `manager_sessions` ADD `scope` text DEFAULT 'full' NOT NULL;
