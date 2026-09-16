@@ -1,0 +1,1 @@
+.title-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}.title-actions button{font:inherit;background:transparent;cursor:pointer}.title-actions button:disabled{opacity:.55;cursor:wait}.admin-status{min-height:1.4em;margin:0 0 12px;color:#8b241d;font-weight:750;font-size:14px}@media(max-width:560px){.title-actions{justify-content:flex-start}}
