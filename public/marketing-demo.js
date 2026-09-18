@@ -57,6 +57,13 @@
       } else link.remove();
     });
     document.querySelector(".cta")?.remove();
+    const navLinks = document.querySelector(".navlinks");
+    if (navLinks && !navLinks.querySelector('a[href="/demo"]')) {
+      const demoLink = document.createElement("a");
+      demoLink.href = "/demo";
+      demoLink.textContent = "Customer demo";
+      navLinks.append(demoLink);
+    }
   }
 
   if (location.pathname === "/demo" || location.pathname === "/demo/") renderSample();
