@@ -1,0 +1,4 @@
+export function canReply(row:{customer_email?:string|null;contact_requested?:number}) { return Boolean(row.contact_requested && row.customer_email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.customer_email)); }
+export function attentionCount(rows:Array<{id:string;status:string;severity:string;contact_requested:number;contacted_at:string|null}>) { return new Set(rows.filter(r=>r.status!=="resolved"&&(r.status==="new"||r.status==="attention"||r.status==="escalated"||r.severity!=="normal"||(r.contact_requested&&!r.contacted_at))).map(r=>r.id)).size; }
+export function boundedPage(value:string|null){return Math.max(1,Math.min(100000,Number.parseInt(value??"1",10)||1));}
+export function emailOutcome(status:number){return status>=200&&status<300?"sent":status>=400&&status<500&&status!==408?"failed":"unknown";}

@@ -33,9 +33,15 @@ export async function PATCH(request: Request) {
   const body = await request.json() as Record<string, unknown>, businessId = String(body.businessId ?? "");
   if (!businessId) return json({ ok: false }, 400);
   const now = new Date().toISOString(), database = db();
+  const previous=await database.prepare("SELECT customer_heading,customer_intro,customer_private_prompt FROM businesses WHERE id=?").bind(businessId).first<{customer_heading:string;customer_intro:string;customer_private_prompt:string}>();
+  if(!previous)return json({ok:false,message:"Business not found."},404);
+  if(!text(body.name)||!String(body.contactEmail??"").match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))return json({ok:false,message:"Business name and valid contact email are required."},400);
+  const wordingChanged=previous.customer_heading!==text(body.customerHeading)||previous.customer_intro!==text(body.customerIntro)||previous.customer_private_prompt!==text(body.customerPrivatePrompt);
   const result = await database.prepare(`UPDATE businesses SET name=?,logo_url=?,address=?,category=?,contact_email=?,phone=?,website=?,opening_hours=?,google_profile_url=?,google_review_url=?,customer_heading=?,customer_intro=?,customer_private_prompt=?,updated_at=? WHERE id=?`).bind(text(body.name), text(body.logoUrl), text(body.address), text(body.category), text(body.contactEmail), text(body.phone), text(body.website), text(body.openingHours), text(body.googleProfileUrl), text(body.googleReviewUrl) ?? "", text(body.customerHeading) ?? "How was your visit?", text(body.customerIntro) ?? "Share an honest review or send feedback privately.", text(body.customerPrivatePrompt) ?? "Something we should know?", now, businessId).run();
   if (!result.meta.changes) return json({ ok: false }, 404);
   const complete = [body.name, body.address, body.category, body.contactEmail, body.phone, body.googleProfileUrl].every(value => Boolean(text(value)));
   await database.prepare(`INSERT INTO onboarding_checks (business_id,business_details_complete,updated_at) VALUES (?,?,?) ON CONFLICT(business_id) DO UPDATE SET business_details_complete=excluded.business_details_complete,updated_at=excluded.updated_at`).bind(businessId, complete ? 1 : 0, now).run();
+  if(wordingChanged)await database.batch([database.prepare("UPDATE businesses SET page_approved=0,page_approved_at=NULL WHERE id=?").bind(businessId),database.prepare("UPDATE onboarding_checks SET customer_page_approved=0 WHERE business_id=?").bind(businessId)]);
+  await database.prepare("INSERT INTO audit_events (id,business_id,actor_email,action,entity_type,entity_id,detail,created_at) VALUES (?,?,?,?,?,?,?,?)").bind(crypto.randomUUID(),businessId,h.get("oai-authenticated-user-email"),"business_details_updated","business",businessId,wordingChanged?"Customer wording changed; owner approval required":"Business details updated",now).run();
   return json({ ok: true, complete, message: complete ? "Business details saved and marked complete." : "Business details saved. Required fields are still missing." });
 }

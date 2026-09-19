@@ -1,39 +1,11 @@
-import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Script from "next/script";
-import { adminAllowed, BUSINESS, ensureBusiness, enforceRetention } from "../api/_shared";
+import { adminAllowed } from "../api/_shared";
+import Workspace from "./workspace";
 export const dynamic="force-dynamic";
-type Feedback={id:string;customer_name:string|null;customer_email:string|null;message:string;contact_requested:number;severity:string;status:string;created_at:string};
-type BusinessHealth={id:string;slug:string;name:string;active:number;last_report_sent_at:string|null;new_feedback:number;waiting_contact:number;review_count:number;google_status:string|null;last_synced_at:string|null};
-
-export default async function AdminPage({searchParams}:{searchParams:Promise<Record<string,string|undefined>>}){
-  const h=await headers(),userEmail=h.get("oai-authenticated-user-email")?.toLowerCase();if(!userEmail)redirect("/signin-with-chatgpt?return_to=%2Fadmin");if(!adminAllowed(h))return <main className="admin-denied"><h1>Access restricted</h1><p>This management page is available only to the StreetVouch administrator.</p></main>;
-  if(!env.DB)throw new Error("Database unavailable");await ensureBusiness(env.DB);await enforceRetention(env.DB);const params=await searchParams,since=new Date(Date.now()-7*86400000).toISOString();
-  const businesses=await env.DB.prepare(`SELECT b.id,b.slug,b.name,b.active,b.last_report_sent_at,
-    (SELECT COUNT(*) FROM feedback f WHERE f.business_id=b.id AND f.status='new') new_feedback,
-    (SELECT COUNT(*) FROM feedback f WHERE f.business_id=b.id AND f.contact_requested=1 AND f.contacted_at IS NULL AND f.status!='resolved') waiting_contact,
-    (SELECT COUNT(*) FROM google_reviews gr WHERE gr.business_id=b.id) review_count,
-    gc.status google_status,gc.last_synced_at
-    FROM businesses b LEFT JOIN google_connections gc ON gc.business_id=b.id ORDER BY b.created_at DESC`).all<BusinessHealth>();
-  const selected=businesses.results.find(x=>x.slug===params.business)??businesses.results[0],businessId=selected?.id??BUSINESS.id;
-  const [feedbackResult,eventResult,reviewsResult,reportsResult,auditResult]=await Promise.all([
-    env.DB.prepare("SELECT * FROM feedback WHERE business_id=? ORDER BY created_at DESC LIMIT 100").bind(businessId).all<Feedback>(),
-    env.DB.prepare("SELECT event_type,COUNT(*) count FROM events WHERE business_id=? AND created_at>=? GROUP BY event_type").bind(businessId,since).all<{event_type:string;count:number}>(),
-    env.DB.prepare("SELECT COUNT(*) count FROM google_reviews WHERE business_id=? AND google_created_at>=?").bind(businessId,since).first<{count:number}>(),
-    env.DB.prepare("SELECT status,recipient_email,created_at FROM report_deliveries WHERE business_id=? ORDER BY created_at DESC LIMIT 5").bind(businessId).all<{status:string;recipient_email:string;created_at:string}>(),
-    env.DB.prepare("SELECT actor_email,action,entity_type,detail,created_at FROM audit_events WHERE business_id=? ORDER BY created_at DESC LIMIT 8").bind(businessId).all<{actor_email:string|null;action:string;entity_type:string;detail:string|null;created_at:string}>()
-  ]);
-  const counts=Object.fromEntries(eventResult.results.map(r=>[r.event_type,r.count])),items=feedbackResult.results,newCount=items.filter(x=>x.status==="new").length,contact=items.filter(x=>x.contact_requested&&x.status!=="resolved").length,serious=items.filter(x=>x.severity==="serious"&&x.status!=="resolved").length;
-  return <><link rel="stylesheet" href="/admin.css"/><link rel="stylesheet" href="/admin-extra.css"/><main className="admin-shell">
-    <header><div><span className="admin-brand">✓ streetvouch</span><p>Business portal</p></div><a href="/signout-with-chatgpt?return_to=%2F">Sign out</a></header>
-    <section className="admin-title"><div><span>YOUR BUSINESSES</span><h1>Business operations.</h1><p>Monitor every account, then open a business to inspect its feedback, reviews, setup and health.</p></div><div className="title-actions"><a className="export" href="/admin/onboarding">Add or set up a business</a><a className="export" href="/admin/health">System health</a><button id="send-summary" className="export">Send email summary</button><a className="export" href="/api/admin/export">Export</a></div></section>
-    <p id="admin-status" className="admin-status" role="status"></p>
-    <section className="business-grid">{businesses.results.map(business=><a key={business.id} className={`business-tile ${business.id===businessId?"selected":""}`} href={`/admin?business=${business.slug}`}><div><b>{business.name}</b><span>{business.google_status==="connected"?"Google connected":"Google not connected"}</span></div><strong>{business.new_feedback+business.waiting_contact}</strong><small>{business.new_feedback} new · {business.waiting_contact} waiting for contact</small></a>)}</section>
-    <section className="summary simple-summary"><div><span>{selected?.name.toUpperCase()??"BUSINESS"}</span><h2>{newCount+contact+serious===0?"No urgent work right now.":`${newCount+contact+serious} items need attention.`}</h2><p>{newCount} new · {contact} awaiting contact · {serious} serious</p><div className="record-actions"><a href={`/admin/onboarding?business=${selected?.slug??""}`}>Setup &amp; account</a><a href={`/manager/${selected?.slug??""}?from=admin`}>Preview owner portal</a><a href={`/customer/${selected?.slug??""}?test=1`} target="_blank">Preview customer page</a></div></div><div className="health-list"><span><b>Google</b>{selected?.google_status==="connected"?"Connected":"Needs connection"}</span><span><b>Last sync</b>{selected?.last_synced_at?new Date(selected.last_synced_at).toLocaleDateString("en-GB"):"Not yet"}</span><span><b>Last email</b>{selected?.last_report_sent_at?new Date(selected.last_report_sent_at).toLocaleDateString("en-GB"):"Not yet"}</span></div></section>
-    <section className="metrics"><article><b>{counts.page_view??0}</b><span>Page visits</span></article><article><b>{counts.google_click??0}</b><span>Google clicks</span></article><article><b>{counts.private_submission??0}</b><span>Private feedback</span></article><article><b>{reviewsResult?.count??0}</b><span>New Google reviews</span></article></section>
-    <section className="admin-two-column"><div className="feedback-list"><div className="list-head"><div><span>PRIVATE FEEDBACK</span><h2>Inbox</h2></div><div className="filters"><button data-filter="all" className="active">All</button><button data-filter="new">New</button><button data-filter="attention">Flagged</button></div></div>{items.length===0?<div className="empty">No feedback yet.</div>:items.map(item=><article className="feedback-card" data-status={item.status} data-severity={item.severity} key={item.id}><div className="feedback-meta"><span className={`pill ${item.severity}`}>{item.severity}</span><span className="pill status">{item.status}</span><time>{new Date(item.created_at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</time></div><p className="message">{item.message}</p><div className="customer"><span><b>{item.customer_name??"Anonymous"}</b>{item.customer_email&&<> · <a href={`mailto:${item.customer_email}`}>{item.customer_email}</a></>}</span>{item.contact_requested&&<strong>Reply requested</strong>}</div><div className="status-actions"><button data-id={item.id} data-status="reviewed" disabled={item.status==="reviewed"}>Reviewed</button><button data-id={item.id} data-status="resolved" disabled={item.status==="resolved"}>Resolve</button></div></article>)}</div>
-      <aside className="admin-side"><section><span>REPORT HISTORY</span><h2>Deliveries</h2>{reportsResult.results.length?<ul>{reportsResult.results.map((report,index)=><li key={index}><div><b>{new Date(report.created_at).toLocaleDateString("en-GB")}</b><small>{report.recipient_email}</small></div><strong>{report.status}</strong></li>)}</ul>:<p>No reports sent yet.</p>}</section><section><span>ACTIVITY</span><h2>Recent changes</h2>{auditResult.results.length?<ul>{auditResult.results.map((event,index)=><li key={index}><div><b>{event.action.replaceAll("_"," ")}</b><small>{event.actor_email??"System"} · {new Date(event.created_at).toLocaleDateString("en-GB")}</small></div></li>)}</ul>:<p>Actions taken in the manager portal will appear here.</p>}</section></aside>
-    </section>
-  </main><Script src="/admin.js" strategy="afterInteractive"/></>;
+export default async function AdminPage(){
+  const h=await headers();
+  if(!h.get("oai-authenticated-user-email"))redirect("/signin-with-chatgpt?return_to=%2Fadmin");
+  if(!adminAllowed(h))return <main><h1>Access restricted</h1><p>This workspace is reserved for the StreetVouch operator.</p></main>;
+  return <><link rel="stylesheet" href="/operator.css"/><Workspace/></>;
 }

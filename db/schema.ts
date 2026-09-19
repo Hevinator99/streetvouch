@@ -43,6 +43,8 @@ export const feedback = sqliteTable("feedback", {
   status: text("status", { enum: ["new", "reviewed", "resolved"] }).notNull().default("new"),
   contactedAt: text("contacted_at"),
   internalNote: text("internal_note"),
+  assignee: text("assignee"),
+  dueAt: text("due_at"),
   createdAt: text("created_at").notNull(), reviewedAt: text("reviewed_at"), resolvedAt: text("resolved_at"),
 }, table => [index("idx_feedback_business_created").on(table.businessId, table.createdAt), index("idx_feedback_business_status").on(table.businessId, table.status)]);
 
@@ -215,3 +217,18 @@ export const aiAnalyses = sqliteTable("ai_analyses", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 }, table => [uniqueIndex("idx_ai_analyses_source").on(table.businessId, table.sourceType, table.sourceId), index("idx_ai_analyses_urgency").on(table.businessId, table.urgency)]);
+
+export const operatorMessages = sqliteTable("operator_messages", {
+  id: text("id").primaryKey(),
+  businessId: text("business_id").notNull().references(() => businesses.id),
+  feedbackId: text("feedback_id").references(() => feedback.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull().default("reply"),
+  recipient: text("recipient"),
+  body: text("body").notNull(),
+  status: text("status").notNull().default("draft"),
+  providerId: text("provider_id"),
+  error: text("error"),
+  actor: text("actor").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, table => [index("idx_operator_messages_feedback").on(table.feedbackId, table.createdAt), index("idx_operator_messages_status").on(table.status, table.businessId)]);
