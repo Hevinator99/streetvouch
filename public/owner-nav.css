@@ -1,0 +1,7 @@
+.manager-nav{display:flex;align-items:center;gap:4px;margin-right:auto;margin-left:24px}
+.manager-nav a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:800;padding:9px 10px;border-radius:9px;white-space:nowrap}
+.manager-nav a:hover,.manager-nav a.active{background:#fff;color:var(--ink)}
+@media(max-width:900px){.manager-header{height:auto;min-height:82px;align-items:flex-start;flex-wrap:wrap;padding:18px 0}.manager-nav{order:3;width:100%;margin:12px 0 0;overflow-x:auto}.manager-header>div{align-self:center}}
+.setup-callout{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:18px;background:linear-gradient(120deg,#fff 65%,#e7ffc0)}
+.setup-callout h2{margin-bottom:6px}.setup-callout p{margin:0}.setup-callout .manager-primary{flex:none}
+@media(max-width:650px){.setup-callout{align-items:flex-start;flex-direction:column}.setup-callout .manager-primary{width:100%}}

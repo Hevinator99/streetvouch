@@ -1,0 +1,8 @@
+.business-details-card { margin-bottom: 18px; }
+.details-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.details-form .wide, .details-form button, .details-form output { grid-column: 1 / -1; }
+.details-form textarea { min-height: 84px; resize: vertical; }
+@media (max-width: 650px) {
+  .details-form { grid-template-columns: 1fr; }
+  .details-form .wide, .details-form button, .details-form output { grid-column: auto; }
+}

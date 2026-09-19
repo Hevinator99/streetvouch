@@ -12,6 +12,24 @@ export const businesses = sqliteTable("businesses", {
   reportEmail: text("report_email"),
   reportDay: integer("report_day").notNull().default(1),
   lastReportSentAt: text("last_report_sent_at"),
+  logoUrl: text("logo_url"),
+  address: text("address"),
+  category: text("category"),
+  contactEmail: text("contact_email"),
+  phone: text("phone"),
+  website: text("website"),
+  openingHours: text("opening_hours"),
+  googleProfileUrl: text("google_profile_url"),
+  status: text("status", { enum: ["setup", "awaiting_approval", "active", "paused", "completed"] }).notNull().default("setup"),
+  customerHeading: text("customer_heading").notNull().default("How was your visit?"),
+  customerIntro: text("customer_intro").notNull().default("Share an honest review or send feedback privately."),
+  customerPrivatePrompt: text("customer_private_prompt").notNull().default("Something we should know?"),
+  pageApproved: integer("page_approved", { mode: "boolean" }).notNull().default(false),
+  pageApprovedAt: text("page_approved_at"),
+  pilotStartedAt: text("pilot_started_at"),
+  pilotCompletedAt: text("pilot_completed_at"),
+  onboardingHandoffAt: text("onboarding_handoff_at"),
+  updatedAt: text("updated_at"),
   createdAt: text("created_at").notNull(),
 });
 
@@ -30,7 +48,8 @@ export const feedback = sqliteTable("feedback", {
 
 export const events = sqliteTable("events", {
   id: text("id").primaryKey(), businessId: text("business_id").notNull().references(() => businesses.id),
-  eventType: text("event_type", { enum: ["page_view", "google_click", "private_submission", "contact_request"] }).notNull(),
+  eventType: text("event_type", { enum: ["page_view", "nfc_tap", "qr_scan", "google_click", "private_submission", "contact_request"] }).notNull(),
+  assetId: text("asset_id"),
   sessionId: text("session_id"), createdAt: text("created_at").notNull(),
 }, table => [index("idx_events_business_created").on(table.businessId, table.createdAt), index("idx_events_business_type").on(table.businessId, table.eventType)]);
 
@@ -55,13 +74,16 @@ export const managerUsers = sqliteTable("manager_users", {
   passwordSetAt: text("password_set_at"),
   role: text("role", { enum: ["manager", "owner"] }).notNull().default("manager"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
+  invitedAt: text("invited_at"),
+  invitationAcceptedAt: text("invitation_accepted_at"),
+  lastLoginAt: text("last_login_at"),
   createdAt: text("created_at").notNull(),
 }, table => [uniqueIndex("idx_manager_users_business_email").on(table.businessId, table.email)]);
 
 export const managerLoginTokens = sqliteTable("manager_login_tokens", {
   tokenHash: text("token_hash").primaryKey(),
   managerUserId: text("manager_user_id").notNull().references(() => managerUsers.id),
-  purpose: text("purpose", { enum: ["reset", "signup"] }).notNull().default("reset"),
+  purpose: text("purpose", { enum: ["reset", "signup", "invitation"] }).notNull().default("reset"),
   pendingPasswordHash: text("pending_password_hash"),
   pendingPasswordSalt: text("pending_password_salt"),
   expiresAt: text("expires_at").notNull(),
@@ -86,10 +108,38 @@ export const googleConnections = sqliteTable("google_connections", {
   googleLocationTitle: text("google_location_title"),
   encryptedRefreshToken: text("encrypted_refresh_token"),
   tokenIv: text("token_iv"),
-  status: text("status", { enum: ["pending", "connected", "needs_attention", "disconnected"] }).notNull().default("pending"),
+  status: text("status", { enum: ["not_connected", "awaiting_authorisation", "pending", "connected", "sync_failed", "reauthorisation_required", "needs_attention", "disconnected"] }).notNull().default("not_connected"),
   lastSyncedAt: text("last_synced_at"),
   lastError: text("last_error"),
   createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const businessAssets = sqliteTable("business_assets", {
+  id: text("id").primaryKey(),
+  businessId: text("business_id").notNull().references(() => businesses.id),
+  token: text("token").notNull().unique(),
+  label: text("label").notNull(),
+  placement: text("placement").notNull(),
+  assetType: text("asset_type", { enum: ["counter", "barber_station", "window", "card", "other"] }).notNull(),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  nfcTestedAt: text("nfc_tested_at"),
+  qrTestedAt: text("qr_tested_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, table => [index("idx_business_assets_business").on(table.businessId), uniqueIndex("idx_business_assets_token").on(table.token)]);
+
+export const onboardingChecks = sqliteTable("onboarding_checks", {
+  businessId: text("business_id").primaryKey().references(() => businesses.id),
+  businessDetailsComplete: integer("business_details_complete", { mode: "boolean" }).notNull().default(false),
+  managerAccountActive: integer("manager_account_active", { mode: "boolean" }).notNull().default(false),
+  googleConnectionTested: integer("google_connection_tested", { mode: "boolean" }).notNull().default(false),
+  customerPageApproved: integer("customer_page_approved", { mode: "boolean" }).notNull().default(false),
+  nfcTested: integer("nfc_tested", { mode: "boolean" }).notNull().default(false),
+  qrTested: integer("qr_tested", { mode: "boolean" }).notNull().default(false),
+  privateFeedbackTested: integer("private_feedback_tested", { mode: "boolean" }).notNull().default(false),
+  notificationEmailTested: integer("notification_email_tested", { mode: "boolean" }).notNull().default(false),
+  pilotActivated: integer("pilot_activated", { mode: "boolean" }).notNull().default(false),
   updatedAt: text("updated_at").notNull(),
 });
 
