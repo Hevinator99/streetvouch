@@ -1,6 +1,8 @@
 import { env } from "cloudflare:workers";
 
 export const BUSINESS = { id: "biz_vbc_01", slug: "village-barbers-cobham", name: "Village Barbers Cobham", googleReviewUrl: "https://www.google.com/search?q=Village+Barbers+Cobham#lrd=0x4875df983e87e645:0xff91360ffce80202,3,,,," };
+export const CUSTOMER_FEEDBACK_LIMIT = 25;
+export const CUSTOMER_FEEDBACK_WINDOW_SECONDS = 3600;
 export function db(): D1Database { if (!env.DB) throw new Error("Database unavailable"); return env.DB; }
 export async function ensureBusiness(database: D1Database) {
   await database.prepare(`INSERT OR IGNORE INTO businesses (id, slug, name, google_review_url, owner_email, baseline_google_reviews, current_google_reviews, created_at) VALUES (?, ?, ?, ?, ?, 7, 7, ?)`).bind(BUSINESS.id, BUSINESS.slug, BUSINESS.name, BUSINESS.googleReviewUrl, env.OWNER_EMAIL ?? null, new Date().toISOString()).run();
