@@ -1,4 +1,15 @@
-import { env, waitUntil } from "cloudflare:workers";
-import { redirect } from "next/navigation";
-export const dynamic="force-dynamic";
-export default async function AssetEntry({params,searchParams}:{params:Promise<{token:string}>;searchParams:Promise<Record<string,string|undefined>>}){const {token}=await params,query=await searchParams;if(!env.DB)return <p>Asset unavailable.</p>;const asset=await env.DB.prepare(`SELECT ba.id,ba.business_id businessId,b.slug,b.page_approved pageApproved FROM business_assets ba JOIN businesses b ON b.id=ba.business_id WHERE ba.token=? AND ba.active=1`).bind(token).first<{id:string;businessId:string;slug:string;pageApproved:number}>();if(!asset||!asset.pageApproved)return <main className="customer-unavailable"><h1>This feedback point is not active.</h1></main>;const channel=query.channel==='qr'?'qr':'nfc',eventType=channel==='qr'?'qr_scan':'nfc_tap';waitUntil(env.DB.prepare("INSERT INTO events (id,business_id,event_type,asset_id,created_at) VALUES (?,?,?,?,?)").bind(crypto.randomUUID(),asset.businessId,eventType,asset.id,new Date().toISOString()).run().catch(error=>console.error("Could not record asset visit",error)));redirect(`/customer/${asset.slug}?asset=${encodeURIComponent(asset.id)}&channel=${channel}`)}
+import { env } from "cloudflare:workers";
+import { CustomerPageView, CustomerUnavailable, type CustomerBusiness } from "../../customer/customer-page";
+
+export const revalidate=300;
+
+type AssetCustomerBusiness=CustomerBusiness&{asset_id:string};
+
+export default async function AssetEntry({params,searchParams}:{params:Promise<{token:string}>;searchParams:Promise<Record<string,string|undefined>>}){
+  const {token}=await params,query=await searchParams;
+  if(!env.DB)return <CustomerUnavailable/>;
+  const business=await env.DB.prepare(`SELECT ba.id asset_id,b.id,b.slug,b.name,b.logo_url,b.category,b.customer_heading,b.customer_intro,b.customer_private_prompt,b.google_review_url,b.status,b.page_approved FROM business_assets ba JOIN businesses b ON b.id=ba.business_id WHERE ba.token=? AND ba.active=1 AND b.status='active' AND b.page_approved=1`).bind(token).first<AssetCustomerBusiness>();
+  if(!business)return <CustomerUnavailable/>;
+  const channel=query.channel==='qr'?'qr':'nfc';
+  return <CustomerPageView business={business} asset={business.asset_id} entryChannel={channel}/>;
+}
