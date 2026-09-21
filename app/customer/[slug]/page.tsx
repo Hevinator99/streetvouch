@@ -1,9 +1,11 @@
 import { env } from "cloudflare:workers";
-import Link from "next/link";
+import { CustomerPageView, CustomerUnavailable, type CustomerBusiness } from "../customer-page";
+
 export const revalidate=300;
-type Business={id:string;slug:string;name:string;logo_url:string|null;category:string|null;customer_heading:string;customer_intro:string;customer_private_prompt:string;google_review_url:string;status:string;page_approved:number};
-export default async function CustomerBusinessPage({params,searchParams}:{params:Promise<{slug:string}>;searchParams:Promise<Record<string,string|undefined>>}){const {slug}=await params,query=await searchParams,test=query.test==='1';if(!env.DB)return <Unavailable/>;const business=await env.DB.prepare("SELECT id,slug,name,logo_url,category,customer_heading,customer_intro,customer_private_prompt,google_review_url,status,page_approved FROM businesses WHERE slug=?").bind(slug).first<Business>();if(!business||(!test&&!business.page_approved))return <Unavailable/>;return <><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="/customer-business.css"/><main className="customer-business" data-business={business.slug} data-test={test?'1':'0'} data-asset={query.asset??''}>
-  {test&&<div className="demo-banner">Safe test mode · no review, feedback, notification or tracking data can be sent.</div>}<section className="customer-business-card"><div className="customer-logo">{business.logo_url?<img src={business.logo_url} alt={`${business.name} logo`} fetchPriority="high"/>:<span>{business.name.slice(0,1)}</span>}</div><span className="shop-name">{business.name}</span><small>{business.category??'Local business'}</small><h1>{business.customer_heading}</h1><p>{business.customer_intro}</p><div id="customer-journey"><button className="choice choice-primary" id="customer-google"><span><b>Leave a Google review</b><small>Share an honest account of your experience</small></span><span className="arrow">↗</span></button><div className="private-route"><span>{business.customer_private_prompt}</span><button id="customer-private">Send private feedback</button></div><p className="honesty-note">Both options are always available. StreetVouch does not filter by rating.</p></div><div className="powered">Feedback made simple with <Link className="brand" href="/"><span className="mark">✓</span>streetvouch</Link></div></section>
-  <script id="customer-config" type="application/json" dangerouslySetInnerHTML={{__html:JSON.stringify({name:business.name,slug:business.slug,googleReviewUrl:business.google_review_url,test,asset:query.asset??''}).replaceAll('<','\\u003c')}}/>
-  </main><script src="/customer-business.js" defer/></>}
-function Unavailable(){return <main className="customer-unavailable"><h1>This feedback page is not active yet.</h1><p>Please contact the business directly if you would like to share feedback.</p></main>}
+
+export default async function CustomerBusinessPage({params}:{params:Promise<{slug:string}>}){
+  const {slug}=await params;
+  if(!env.DB)return <CustomerUnavailable/>;
+  const business=await env.DB.prepare("SELECT id,slug,name,logo_url,category,customer_heading,customer_intro,customer_private_prompt,google_review_url,status,page_approved FROM businesses WHERE slug=? AND status='active' AND page_approved=1").bind(slug).first<CustomerBusiness>();
+  return business?<CustomerPageView business={business}/>:<CustomerUnavailable/>;
+}
