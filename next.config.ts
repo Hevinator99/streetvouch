@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   async headers(){return[
+    {source:"/t/4987f4757cfd4ed7",headers:[
+      {key:"Cache-Control",value:"public, max-age=300, s-maxage=31536000, stale-while-revalidate=86400"},
+      {key:"Cloudflare-CDN-Cache-Control",value:"public, s-maxage=31536000, stale-while-revalidate=86400"},
+    ]},
     {source:"/customer/:path*",headers:[
       {key:"Cache-Control",value:"public, max-age=0, s-maxage=300, stale-while-revalidate=86400"},
       {key:"Cloudflare-CDN-Cache-Control",value:"public, s-maxage=300, stale-while-revalidate=86400"},
