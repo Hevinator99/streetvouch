@@ -44,7 +44,7 @@ function metricCard(label:string,value:string,comparison?:ReturnType<typeof tren
 function stars(rating:number){return `${"★".repeat(Math.max(0,Math.min(5,rating)))}${"☆".repeat(Math.max(0,5-rating))}`;}
 
 export function buildWeeklyReport(input:WeeklyReportInput){
-  const url=input.dashboardUrl??`https://go.streetvouch.com/manager/${encodeURIComponent(input.businessSlug)}`;
+  const url=input.dashboardUrl??`https://app.streetvouch.com/manager/${encodeURIComponent(input.businessSlug)}`;
   const actionCount=input.awaitingContact+input.flagged+input.reviewsAwaitingReply;
   const interactions=input.current.nfcTaps+input.current.qrScans;
   const previousInteractions=input.previous.nfcTaps+input.previous.qrScans;

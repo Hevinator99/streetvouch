@@ -11,6 +11,6 @@ export async function POST(request: Request) {
   const id=crypto.randomUUID(),token=crypto.randomUUID().replaceAll("-","").slice(0,16),now=new Date().toISOString();
   await database.prepare("INSERT INTO business_assets (id,business_id,token,label,placement,asset_type,active,created_at,updated_at) VALUES (?,?,?,?,?,?,1,?,?)").bind(id,body.businessId,token,body.label.trim().slice(0,100),body.placement.trim().slice(0,160),body.assetType,now,now).run();
   await database.prepare("INSERT INTO audit_events (id,business_id,actor_email,action,entity_type,entity_id,detail,created_at) VALUES (?,?,?,?,?,?,?,?)").bind(crypto.randomUUID(),body.businessId,h.get("oai-authenticated-user-email"),"asset_created","asset",id,body.label.trim(),now).run();
-  const origin=new URL(request.url).origin,base=`${origin}/t/${token}`;
+  const base=`https://go.streetvouch.com/t/${token}`;
   return json({ok:true,id,token,nfcUrl:`${base}?channel=nfc`,qrUrl:`${base}?channel=qr`,qrPayload:`${base}?channel=qr`,message:"Asset created. Encode and test both URLs before activation."});
 }

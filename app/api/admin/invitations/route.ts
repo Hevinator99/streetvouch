@@ -19,6 +19,6 @@ export async function POST(request: Request) {
   ];
   statements.push(database.prepare("INSERT INTO audit_events (id,business_id,actor_email,action,entity_type,entity_id,detail,created_at) VALUES (?,?,?,?,?,?,?,?)").bind(crypto.randomUUID(),body.businessId,h.get("oai-authenticated-user-email"),"owner_invited","manager",managerId,"Secure owner invitation created",now.toISOString()));
   await database.batch(statements);
-  const invitationUrl = `${new URL(request.url).origin}/manager/invite?token=${encodeURIComponent(token)}`;
+  const invitationUrl = `https://app.streetvouch.com/manager/invite?token=${encodeURIComponent(token)}`;
   return json({ ok: true, invitationUrl, expiresAt: expires, delivery: "not_sent", message: "Secure invitation created. Copy the link and send it to the manager when ready." });
 }
