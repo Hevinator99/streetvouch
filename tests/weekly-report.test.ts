@@ -40,3 +40,16 @@ test("weekly report explains complete sentiment coverage",()=>{
   assert.match(result.html,/Neutral/);
   assert.match(result.html,/0% of written responses/);
 });
+
+test("weekly report adds operational categories and transparent quote labels",()=>{
+  const result=buildWeeklyReport({...report,feedback:[
+    {message:"Nice people",severity:"normal",contactRequested:false},
+    {message:"Not bad",severity:"normal",contactRequested:false},
+    {message:"The haircut was okay, but the barber was rude",severity:"attention",contactRequested:false},
+  ],reviews:[]});
+  assert.match(result.html,/Feedback breakdown/);
+  assert.match(result.html,/Service strength/);
+  assert.match(result.html,/Neutral or unclear/);
+  assert.match(result.html,/Mixed experience/);
+  assert.match(result.html,/Recurring themes/);
+});
