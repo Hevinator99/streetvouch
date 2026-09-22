@@ -13,7 +13,7 @@ test("weekly report prioritises actions and separates clicks from reviews",()=>{
   assert.match(result.html,/Customer activity/);
   assert.match(result.html,/What the feedback signals/);
   assert.match(result.html,/60%/);
-  assert.match(result.html,/Weekly written feedback received/);
+  assert.match(result.html,/Confirmed Google reviews/);
   assert.doesNotMatch(result.html,/What changed this week/);
 });
 
