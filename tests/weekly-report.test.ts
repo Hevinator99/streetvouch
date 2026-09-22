@@ -13,6 +13,10 @@ test("weekly report prioritises actions and separates clicks from reviews",()=>{
   assert.match(result.html,/Customer activity/);
   assert.match(result.html,/What the feedback signals/);
   assert.match(result.html,/60%/);
+  assert.match(result.html,/What changed this week/);
+  assert.match(result.html,/Private feedback rate/);
+  assert.match(result.html,/Google intent rate/);
+  assert.match(result.html,/Directional signals only/);
 });
 
 test("weekly report escapes customer and business content",()=>{
@@ -33,4 +37,6 @@ test("weekly report explains complete sentiment coverage",()=>{
   const result=buildWeeklyReport({...report,sentimentAnalysed:5});
   assert.match(result.html,/5 of 5 written responses analysed/);
   assert.match(result.html,/automated interpretation, not a customer score/);
+  assert.match(result.html,/Neutral/);
+  assert.match(result.html,/0% of written responses/);
 });
