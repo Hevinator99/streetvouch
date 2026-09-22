@@ -17,7 +17,7 @@ test('shared dashboard renders real counts, deduplicates priorities and does not
  assert.match(html,/1 item needs your attention/);assert.doesNotMatch(html,/2 items need your attention/);
  assert.match(html,/Google not connected/);assert.match(html,/Good haircut/);assert.match(html,/Terrible cut/);
  assert.match(html,/data-theme-link/);assert.match(html,/sv-donut/);assert.match(html,/sv-bar private/);
- assert.match(html,/section=inbox#inbox/);assert.match(html,/source=google#inbox/);assert.match(html,/section=reports#report/);
+ assert.match(html,/section=inbox#inbox/);assert.match(html,/source=google#inbox/);assert.match(html,/section=reports#report/);assert.match(html,/view-overview/);
  assert.doesNotMatch(html,/Village Barbers/);
  delete globalThis.__dashboardFixture;
 });
