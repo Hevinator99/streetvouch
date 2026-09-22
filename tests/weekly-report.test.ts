@@ -13,10 +13,8 @@ test("weekly report prioritises actions and separates clicks from reviews",()=>{
   assert.match(result.html,/Customer activity/);
   assert.match(result.html,/What the feedback signals/);
   assert.match(result.html,/60%/);
-  assert.match(result.html,/What changed this week/);
-  assert.match(result.html,/Private feedback rate/);
-  assert.match(result.html,/Google intent rate/);
-  assert.match(result.html,/Directional signals only/);
+  assert.match(result.html,/Weekly written feedback received/);
+  assert.doesNotMatch(result.html,/What changed this week/);
 });
 
 test("weekly report escapes customer and business content",()=>{
