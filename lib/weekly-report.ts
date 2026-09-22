@@ -48,12 +48,13 @@ function metricCard(label:string,value:string,accent:string,comparison?:ReturnTy
 
 function stars(rating:number){return `${"★".repeat(Math.max(0,Math.min(5,rating)))}${"☆".repeat(Math.max(0,5-rating))}`;}
 
-function classifyComment(text:string,rating?:number,contactRequested=false):ClassifiedComment{
-  const lower=text.toLowerCase();
+export function classifyComment(text:string,rating?:number,contactRequested=false):ClassifiedComment{
+  const lower=text.toLowerCase().replace(/[’‘]/g,"'");
   const mild=/\bnot bad\b/.test(lower);
-  const positive=!mild&&(/\b(good|great|excellent|amazing|friendly|nice|love|lovely|perfect|best|happy|recommend|okay|ok)\b/.test(lower)||(rating!==undefined&&rating>=4));
+  const positive=mild||(/\b(good|great|excellent|amazing|friendly|nice|love|lovely|perfect|best|happy|recommend|okay|ok)\b/.test(lower.replace(/\bnot\s+(good|great|happy|nice|okay|ok)\b/g,"")))||(rating!==undefined&&rating>=4);
   const negative=!mild&&(/\b(bad|poor|rude|awful|terrible|worst|hate|disappoint\w*|unhappy|refund|complaint|late|delay\w*|hot|cold|uncomfortable)\b/.test(lower)||/\b(won't|wouldn't|will not)\s+(be\s+)?(returning|return|come back|coming back)\b/.test(lower)||/\bnever\s+(again|return|coming back)\b/.test(lower)||(rating!==undefined&&rating<=3));
-  const sentiment:Sentiment=positive&&negative?"mixed":negative?"negative":positive?"positive":"neutral";
+  const uncertain=/\bnot sure\b/.test(lower),negated=/\bnot\s+(good|great|happy|nice|okay|ok)\b/.test(lower);
+  const sentiment:Sentiment=uncertain?"mixed":positive&&(negative||negated)?"mixed":negative||negated?"negative":positive?"positive":"neutral";
   const themes:string[]=[];
   if(/\b(hair|haircut|cut|trim|fade|service quality)\b/.test(lower))themes.push("Haircut quality");
   if(/\b(friendly|nice people|lovely|welcoming|kind)\b/.test(lower))themes.push("Staff friendliness");

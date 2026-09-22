@@ -6,6 +6,7 @@ export const dynamic="force-dynamic";
 
 export default async function GoogleLocationPage(){
   const manager=await getManagerSession();if(!manager)redirect("/manager/village-barbers-cobham");
+  if(!env.DB)throw new Error("Database unavailable");
   const connection=await env.DB.prepare("SELECT encrypted_refresh_token,token_iv,status FROM google_connections WHERE business_id=?").bind(manager.businessId).first<{encrypted_refresh_token:string;token_iv:string;status:string}>();
   if(!connection?.encrypted_refresh_token||!connection.token_iv||connection.status!=="pending")redirect("/manager/village-barbers-cobham");
   let locations:Array<{accountName:string;locationName:string;title:string}>=[],error="";

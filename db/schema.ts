@@ -40,7 +40,7 @@ export const feedback = sqliteTable("feedback", {
   message: text("message").notNull(),
   contactRequested: integer("contact_requested", { mode: "boolean" }).notNull().default(false),
   severity: text("severity", { enum: ["normal", "attention", "serious"] }).notNull().default("normal"),
-  status: text("status", { enum: ["new", "reviewed", "resolved"] }).notNull().default("new"),
+  status: text("status", { enum: ["new", "reviewed", "resolved", "archived"] }).notNull().default("new"),
   contactedAt: text("contacted_at"),
   internalNote: text("internal_note"),
   assignee: text("assignee"),

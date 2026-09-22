@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorPage({reset}:{reset:()=>void}){return <main style={{maxWidth:600,margin:"80px auto",padding:24,fontFamily:"Arial,sans-serif",color:"#163a35"}}><h1>Your dashboard couldn’t load.</h1><p>Your feedback has not been changed. Try loading the page again.</p><button onClick={reset} style={{background:"#163a35",color:"white",padding:"12px 20px",border:0,borderRadius:10,cursor:"pointer"}}>Try again</button></main>}

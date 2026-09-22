@@ -16,7 +16,7 @@ export async function POST(request:Request){
   if(body.action==="note"){
     const note=(body.note??"").trim().slice(0,1000);await database.batch([database.prepare("UPDATE feedback SET internal_note=? WHERE id=? AND business_id=?").bind(note||null,body.id,session.businessId),database.prepare("INSERT INTO audit_events (id,business_id,actor_email,action,entity_type,entity_id,detail,created_at) VALUES (?,?,?,?,?,?,?,?)").bind(crypto.randomUUID(),session.businessId,session.email,"note_updated","feedback",body.id,note?"Note saved":"Note cleared",now)]);return json({ok:true});
   }
-  if(!new Set(["new","reviewed","resolved"]).has(body.status??""))return json({ok:false},400);
+  if(!new Set(["new","reviewed","resolved","archived"]).has(body.status??""))return json({ok:false},400);
   const reviewed=body.status==="new"?null:now,resolved=body.status==="resolved"?now:null;
   await database.batch([database.prepare("UPDATE feedback SET status=?,reviewed_at=?,resolved_at=? WHERE id=? AND business_id=?").bind(body.status,reviewed,resolved,body.id,session.businessId),database.prepare("INSERT INTO audit_events (id,business_id,actor_email,action,entity_type,entity_id,detail,created_at) VALUES (?,?,?,?,?,?,?,?)").bind(crypto.randomUUID(),session.businessId,session.email,"status_changed","feedback",body.id,body.status??"",now)]);
   return json({ok:true});

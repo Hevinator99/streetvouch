@@ -1,0 +1,1 @@
+export default function Loading(){return <main aria-busy="true" aria-label="Loading your manager dashboard" style={{padding:32,maxWidth:1200,margin:"auto",fontFamily:"Arial,sans-serif"}}><p>Loading your customer pulse…</p>{[180,95,240].map((height,i)=><div key={i} style={{height,background:"#edf1f4",borderRadius:18,marginTop:20}}/>)}</main>}

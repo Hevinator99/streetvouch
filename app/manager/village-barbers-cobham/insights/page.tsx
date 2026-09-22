@@ -16,6 +16,7 @@ type Item = {
 export default async function InsightsPage() {
   const session = await getManagerSession();
   if (!session) redirect("/manager/village-barbers-cobham");
+  if(!env.DB)throw new Error("Database unavailable");
   const result = await env.DB.prepare(`
     SELECT 'feedback' source_type, f.id source_id, COALESCE(f.customer_name, 'Anonymous') customer,
       f.message text, NULL rating, f.created_at, a.urgency, a.confidence, a.sentiment, a.themes,
