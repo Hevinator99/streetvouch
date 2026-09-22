@@ -10,8 +10,8 @@ test("weekly report prioritises actions and separates clicks from reviews",()=>{
   assert.match(result.html,/Google opens and confirmed reviews are measured separately/);
   assert.match(result.text,/Google page opens: 11/);
   assert.match(result.text,/New Google reviews: 3/);
-  assert.match(result.html,/How customers engaged/);
-  assert.match(result.html,/Sentiment analysis/);
+  assert.match(result.html,/Customer activity/);
+  assert.match(result.html,/What the feedback signals/);
   assert.match(result.html,/60%/);
 });
 
@@ -27,4 +27,10 @@ test("weekly report has a useful zero-state",()=>{
   assert.match(result.html,/You’re all caught up/);
   assert.match(result.html,/No NFC or QR activity was recorded/);
   assert.match(result.html,/no new written comments/i);
+});
+
+test("weekly report explains complete sentiment coverage",()=>{
+  const result=buildWeeklyReport({...report,sentimentAnalysed:5});
+  assert.match(result.html,/5 of 5 written responses analysed/);
+  assert.match(result.html,/automated interpretation, not a customer score/);
 });
