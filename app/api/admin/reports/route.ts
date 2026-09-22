@@ -50,10 +50,10 @@ export async function POST(request:Request){
   const periodStart=delivery?.period_start??new Date(Date.now()-7*86400000).toISOString(),periodEnd=delivery?.period_end??now;
   const input=await reportInput(database,business,periodStart,periodEnd),report=buildWeeklyReport(input);
   const snapshot=JSON.stringify({...input.current,awaitingContact:input.awaitingContact,flagged:input.flagged,reviewsAwaitingReply:input.reviewsAwaitingReply,sentiment:input.sentiment,themes:input.themes});
-  const id=delivery?.id??`weekly-${business.id}-${now.slice(0,10)}`;
+  const id=delivery?.id??`weekly-${business.id}-${crypto.randomUUID()}`;
   await database.prepare("INSERT OR IGNORE INTO operator_messages (id,business_id,kind,recipient,body,status,actor,created_at,updated_at) VALUES (?,?,'report',?,?,'draft',?,?,?)").bind(id,business.id,recipient,report.html,actor,now,now).run();
   const claim=await database.prepare("UPDATE operator_messages SET status='sending',body=?,updated_at=? WHERE id=? AND status IN ('draft','failed')").bind(report.html,now,id).run();
-  if(!claim.meta.changes)return json({message:"This summary was already submitted today, or its delivery is being checked. Check its recorded status before sending again."},409);
+  if(!claim.meta.changes)return json({message:"This delivery is already being processed. Refresh the report list before trying again."},409);
   let state="unknown",error:string|null="The email result is uncertain. Check the provider before retrying.",provider:string|null=null;
   try{
     const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":`sv-report-${id}`},body:JSON.stringify({from:env.EMAIL_FROM??"StreetVouch <notifications@mail.streetvouch.com>",to:[recipient],subject:report.subject,html:report.html,text:report.text})});
