@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildWeeklyReport, type WeeklyReportInput } from "../lib/weekly-report";
 
-const report:WeeklyReportInput={businessName:"Village & Barbers",businessSlug:"village-barbers",periodStart:"2026-09-14T00:00:00.000Z",periodEnd:"2026-09-21T00:00:00.000Z",current:{visits:22,nfcTaps:18,qrScans:2,googleClicks:11,privateMessages:2,newGoogleReviews:3,averageRating:4.7},previous:{visits:11,nfcTaps:8,qrScans:2,googleClicks:6,privateMessages:1,newGoogleReviews:2,averageRating:4.5},awaitingContact:1,flagged:1,reviewsAwaitingReply:2,feedback:[{message:"Please call me <today>",severity:"attention",contactRequested:true}],reviews:[{comment:"Great cut & friendly team",rating:5,reviewerName:"Sam"}],themes:["service","cut quality"]};
+const report:WeeklyReportInput={businessName:"Village & Barbers",businessSlug:"village-barbers",periodStart:"2026-09-14T00:00:00.000Z",periodEnd:"2026-09-21T00:00:00.000Z",current:{visits:22,nfcTaps:18,qrScans:2,googleClicks:11,privateMessages:2,newGoogleReviews:3,averageRating:4.7},previous:{visits:11,nfcTaps:8,qrScans:2,googleClicks:6,privateMessages:1,newGoogleReviews:2,averageRating:4.5},awaitingContact:1,flagged:1,reviewsAwaitingReply:2,feedback:[{message:"Please call me <today>",severity:"attention",contactRequested:true}],reviews:[{comment:"Great cut & friendly team",rating:5,reviewerName:"Sam"}],themes:["service","cut quality"],sentiment:{positive:3,mixed:1,negative:1,neutral:0}};
 
 test("weekly report prioritises actions and separates clicks from reviews",()=>{
   const result=buildWeeklyReport(report);
@@ -10,6 +10,9 @@ test("weekly report prioritises actions and separates clicks from reviews",()=>{
   assert.match(result.html,/Google opens and confirmed reviews are measured separately/);
   assert.match(result.text,/Google page opens: 11/);
   assert.match(result.text,/New Google reviews: 3/);
+  assert.match(result.html,/How customers engaged/);
+  assert.match(result.html,/Sentiment analysis/);
+  assert.match(result.html,/60%/);
 });
 
 test("weekly report escapes customer and business content",()=>{
