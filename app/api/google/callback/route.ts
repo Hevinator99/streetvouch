@@ -3,7 +3,7 @@ import { getManagerSession, hashToken } from "../../../manager-auth";
 import { db } from "../../_shared";
 import { encryptToken, listGoogleLocations, syncGoogleReviews } from "../../../google";
 
-const redirect=(request:Request,state:string,slug:string)=>{const path=slug==="village-barbers-cobham"?`/manager/${slug}`:`/manager/${slug}/onboarding`,url=new URL(path,request.url);url.searchParams.set("google",state);return Response.redirect(url,303);};
+const redirect=(request:Request,state:string,slug:string)=>{const path=`/manager/${slug}`,url=new URL(path,request.url);url.searchParams.set("source","google");url.searchParams.set("google",state);return Response.redirect(url,303);};
 
 export async function GET(request:Request){
   const manager=await getManagerSession(),url=new URL(request.url),code=url.searchParams.get("code"),state=url.searchParams.get("state");
