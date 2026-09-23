@@ -26,5 +26,6 @@ export async function publishGoogleReply(businessId:string,reviewId:string,comme
   const accountId=connection.google_account_name.split("/").pop(),locationId=connection.google_location_name.split("/").pop();
   const response=await fetch(`https://mybusiness.googleapis.com/v4/accounts/${accountId}/locations/${locationId}/reviews/${review.google_review_id}/reply`,{method:"PUT",headers:{Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"},body:JSON.stringify({comment})});
   if(!response.ok)throw new Error(`Google reply failed (${response.status})`);
-  await database.prepare("UPDATE google_reviews SET reply_comment=?,reply_status='published' WHERE id=? AND business_id=?").bind(comment,reviewId,businessId).run();
+  try{await database.prepare("UPDATE google_reviews SET reply_comment=?,reply_status='published' WHERE id=? AND business_id=?").bind(comment,reviewId,businessId).run();return {recorded:true};}
+  catch(error){console.error("google_reply_local_record_failed",error);return {recorded:false};}
 }
