@@ -49,13 +49,13 @@
     const journey=getJourney();
     journey.innerHTML=`<form class="customer-feedback-form" id="customer-feedback">
       <label>Your feedback<textarea id="customer-message" required minlength="3" maxlength="2000"></textarea></label>
-      <label class="anonymous-choice"><input id="customer-anonymous" type="checkbox" checked><span><b>Send anonymously</b><small>No name or email is attached, so the team cannot reply. Avoid identifying details in your message.</small></span></label>
-      <div class="customer-identity" id="customer-identity" hidden>
+      <label class="anonymous-choice"><input id="customer-anonymous" type="checkbox"><span><b>Send anonymously</b><small>No name or email is attached, so the team cannot reply. Avoid identifying details in your message.</small></span></label>
+      <div class="customer-identity" id="customer-identity">
         <label>Your name <small>Optional</small><input id="customer-name" maxlength="100"></label>
         <label class="consent"><input id="customer-contact" type="checkbox"><span>I would like the team to reply.</span></label>
         <label id="customer-email-wrap" hidden>Email address<input id="customer-email" type="email"><small>Only used to reply to your feedback.</small></label>
       </div>
-      <button class="btn">${config.test?'Run safe feedback test':'Send anonymous feedback'}</button>
+      <button class="btn">${config.test?'Run safe feedback test':'Send private feedback'}</button>
       <p id="customer-status" role="status"></p>
     </form>`;
     const form=document.getElementById('customer-feedback');
