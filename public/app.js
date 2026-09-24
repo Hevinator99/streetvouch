@@ -22,6 +22,7 @@ if(!barber){
   document.querySelector('.hero .review-card .reply-label').textContent='✓ Example of a thoughtful reply';
   document.querySelector('.hero .review-card .micro').textContent='Illustrative review and reply · Google connection planned';
   document.querySelectorAll('.handled-row:not(.alert-row) b').forEach(label=>label.textContent='Example reply');
+  document.querySelector('.handled-row:nth-child(2) small').textContent='Helpful response in your voice';
   document.querySelector('.handled-total').innerHTML='<b>Example workflow</b><span>Google connection planned</span>';
   document.querySelector('.handle-stage>p').textContent='Businesses will be able to review and publish replies after connecting their Google Business Profile. Sensitive issues reach the owner.';
   const finalCaption=document.querySelector('.story-caption span:last-child');
