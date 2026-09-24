@@ -6,11 +6,7 @@
   const query=new URLSearchParams(location.search);
   const asset=query.get('asset')||config.asset||'';
   const entryChannel=query.get('channel')||config.entryChannel||'';
-  const journey=document.getElementById('customer-journey');
-  const anonymousNote=document.createElement('p');
-  anonymousNote.className='anonymous-note';
-  anonymousNote.textContent='Private feedback can be sent anonymously.';
-  document.querySelector('.private-route').after(anonymousNote);
+  const getJourney=()=>document.getElementById('customer-journey');
 
   const refreshConfig=()=>fetch(`/api/customer/config/${encodeURIComponent(config.slug)}`)
     .then(response=>response.ok?response.json():null)
@@ -37,16 +33,20 @@
   else if(entryChannel==='qr')track('qr_scan');
   track('page_view');
 
-  document.getElementById('customer-google').onclick=()=>{
+  document.addEventListener('click',event=>{
+    if(!event.target.closest('#customer-google'))return;
+    const journey=getJourney();
     if(config.test){
       journey.innerHTML='<div class="safe-test-result"><b>Google review test passed.</b><p>No Google page was opened and no review can be published in safe test mode.</p><button class="btn" onclick="location.reload()">Back</button></div>';
       return;
     }
     track('google_click');
     location.assign(config.googleReviewUrl);
-  };
+  });
 
-  document.getElementById('customer-private').onclick=()=>{
+  document.addEventListener('click',event=>{
+    if(!event.target.closest('#customer-private'))return;
+    const journey=getJourney();
     journey.innerHTML=`<form class="customer-feedback-form" id="customer-feedback">
       <label>Your feedback<textarea id="customer-message" required minlength="3" maxlength="2000"></textarea></label>
       <label class="anonymous-choice"><input id="customer-anonymous" type="checkbox" checked><span><b>Send anonymously</b><small>No name or email is attached, so the team cannot reply. Avoid identifying details in your message.</small></span></label>
@@ -97,5 +97,5 @@
         button.textContent=originalLabel;
       }
     };
-  };
+  });
 })();
