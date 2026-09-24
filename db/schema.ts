@@ -232,3 +232,38 @@ export const operatorMessages = sqliteTable("operator_messages", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 }, table => [index("idx_operator_messages_feedback").on(table.feedbackId, table.createdAt), index("idx_operator_messages_status").on(table.status, table.businessId)]);
+
+export const visibilityConnections = sqliteTable("visibility_connections", {
+  businessId: text("business_id").primaryKey().references(() => businesses.id),
+  encryptedRefreshToken: text("encrypted_refresh_token"), tokenIv: text("token_iv"),
+  searchProperty: text("search_property"), analyticsProperty: text("analytics_property"),
+  status: text("status").notNull().default("disconnected"), lastError: text("last_error"),
+  lastCollectedAt: text("last_collected_at"), updatedAt: text("updated_at").notNull(),
+});
+export const visibilityOauthStates = sqliteTable("visibility_oauth_states", {
+  stateHash: text("state_hash").primaryKey(), businessId: text("business_id").notNull().references(() => businesses.id),
+  managerUserId: text("manager_user_id").notNull().references(() => managerUsers.id),
+  expiresAt: text("expires_at").notNull(), createdAt: text("created_at").notNull(),
+});
+export const visibilityDaily = sqliteTable("visibility_daily", {
+  businessId: text("business_id").notNull().references(() => businesses.id), date: text("date").notNull(),
+  searchClicks: integer("search_clicks"), searchImpressions: integer("search_impressions"),
+  searchPositionSum: integer("search_position_sum"), analyticsOrganicSessions: integer("analytics_organic_sessions"),
+  aiReferralSessions: integer("ai_referral_sessions"), collectedAt: text("collected_at").notNull(),
+}, table => [uniqueIndex("idx_visibility_daily_business_date").on(table.businessId, table.date)]);
+export const visibilitySearchRows = sqliteTable("visibility_search_rows", {
+  businessId: text("business_id").notNull().references(() => businesses.id), date: text("date").notNull(),
+  kind: text("kind").notNull(), value: text("value").notNull(), clicks: integer("clicks").notNull(),
+  impressions: integer("impressions").notNull(), position: integer("position").notNull(),
+}, table => [uniqueIndex("idx_visibility_rows_key").on(table.businessId, table.date, table.kind, table.value)]);
+export const visibilitySettings = sqliteTable("visibility_settings", {
+  businessId: text("business_id").primaryKey().references(() => businesses.id), dropPercent: integer("drop_percent").notNull().default(40),
+  minBaseline: integer("min_baseline").notNull().default(20), periodDays: integer("period_days").notNull().default(7),
+  updatedAt: text("updated_at").notNull(),
+});
+export const visibilityHealth = sqliteTable("visibility_health", {
+  businessId: text("business_id").notNull().references(() => businesses.id), url: text("url").notNull(),
+  status: integer("status"), finalUrl: text("final_url"), title: text("title"), noindex: integer("noindex"),
+  robotsBlocked: integer("robots_blocked"), localBusiness: integer("local_business"), issue: text("issue"),
+  checkedAt: text("checked_at").notNull(),
+}, table => [uniqueIndex("idx_visibility_health_url").on(table.businessId, table.url)]);

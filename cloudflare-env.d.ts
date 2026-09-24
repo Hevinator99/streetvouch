@@ -10,5 +10,6 @@ declare namespace Cloudflare {
     GOOGLE_TOKEN_ENCRYPTION_KEY?: string;
     OPENAI_API_KEY?: string;
     OPENAI_MODEL?: string;
+    VISIBILITY_CRON_SECRET?: string;
   }
 }
