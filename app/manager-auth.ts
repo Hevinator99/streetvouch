@@ -14,8 +14,10 @@ export type ManagerSession={managerUserId:string;businessId:string;email:string;
 
 export async function getManagerSession():Promise<ManagerSession|null>{
   if(!env.DB)return null;const token=(await cookies()).get(MANAGER_COOKIE)?.value;if(!token)return null;const hash=await hashToken(token),now=new Date().toISOString();
-  const row=await env.DB.prepare(`SELECT mu.id managerUserId,mu.business_id businessId,mu.email,mu.display_name displayName,mu.role,b.name businessName,b.slug businessSlug FROM manager_sessions ms JOIN manager_users mu ON mu.id=ms.manager_user_id JOIN businesses b ON b.id=mu.business_id WHERE ms.token_hash=? AND ms.expires_at>? AND ms.scope='full' AND mu.active=1`).bind(hash,now).first<ManagerSession>();
-  if(!row)return null;await env.DB.prepare("UPDATE manager_sessions SET last_seen_at=? WHERE token_hash=?").bind(now,hash).run();return row;
+  const row=await env.DB.prepare(`SELECT mu.id managerUserId,mu.business_id businessId,mu.email,mu.display_name displayName,mu.role,b.name businessName,b.slug businessSlug,ms.last_seen_at lastSeenAt FROM manager_sessions ms JOIN manager_users mu ON mu.id=ms.manager_user_id JOIN businesses b ON b.id=mu.business_id WHERE ms.token_hash=? AND ms.expires_at>? AND ms.scope='full' AND mu.active=1`).bind(hash,now).first<ManagerSession&{lastSeenAt:string}>();
+  if(!row)return null;
+  if(Date.now()-Date.parse(row.lastSeenAt)>5*60*1000)await env.DB.prepare("UPDATE manager_sessions SET last_seen_at=? WHERE token_hash=?").bind(now,hash).run();
+  return row;
 }
 
 export async function getPasswordResetSession():Promise<ManagerSession|null>{

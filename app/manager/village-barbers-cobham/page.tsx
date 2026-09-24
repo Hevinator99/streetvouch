@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import Script from "next/script";
-import { BUSINESS, ensureBusiness } from "../../api/_shared";
+import { BUSINESS } from "../../api/_shared";
 import { getManagerSession, getPasswordResetSession } from "../../manager-auth";
 import Dashboard from "../dashboard";
 export const dynamic="force-dynamic";
@@ -10,7 +10,6 @@ export default async function ManagerDashboard({searchParams}:{searchParams:Prom
  if(!session)return <ManagerSignIn fromAdmin={query.from==="admin"}/>;
  if(session.businessId!==BUSINESS.id)return <main><h1>Access restricted</h1></main>;
  if(!env.DB)throw new Error("Database unavailable");
- await ensureBusiness(env.DB);
  return <Dashboard session={{...session,businessSlug:"village-barbers-cobham"}} query={query}/>;
 }
 
