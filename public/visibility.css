@@ -37,6 +37,10 @@
 .v-alert{margin:12px 0}
 .v-alert h3{margin:0!important}
 .v-alert small{color:#587061}
+.v-opportunity{border:1px solid #dce7de;border-radius:12px;padding:16px;margin:14px 0;background:#f8fbf7;overflow-wrap:anywhere}
+.v-opportunity h3{margin:0 0 12px!important}
+.v-opportunity p{margin:8px 0!important}
+.v-opportunity small{display:block;color:#63776e}
 .v-table{overflow:auto}
 .v-table table{width:100%;border-collapse:collapse}
 .v-table th,.v-table td{text-align:left;padding:10px;border-bottom:1px solid #e4ece5}
