@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import Script from "next/script";
 import { Bell, Settings, ArrowUpRight, MessageSquare, Star, ScanLine, Eye, MousePointerClick, Check, ChartColumnIncreasing } from "lucide-react";
-import { classifyComment } from "../../lib/weekly-report";
+import { classifyComment, feedbackNeedsAttention } from "../../lib/weekly-report";
 
 type Session={businessId:string;businessSlug:string;businessName:string};
 type Feedback={id:string;message:string;customer_name:string|null;customer_email:string|null;created_at:string;status:string;severity:string;contact_requested:number;contacted_at:string|null;internal_note:string|null;due_at:string|null};
@@ -37,7 +37,7 @@ export default async function Dashboard({session,query}:{session:Session;query:R
   const waiting=feedback.filter(x=>x.contact_requested&&!x.contacted_at&&!closed(x.status));
   const flagged=feedback.filter(x=>x.severity!=="normal"&&!closed(x.status));
   const pending=reviews.filter(x=>!x.reply_comment&&x.reply_status!=="published");
-  const urgent=feedback.filter(x=>!closed(x.status)&&(waiting.includes(x)||flagged.includes(x)||classify(x).sentiment==="negative"||(x.due_at&&x.due_at<end)));
+  const urgent=feedback.filter(x=>feedbackNeedsAttention(x,end));
   const attention=urgent.length+pending.length;
   const comments=[...pf.filter(x=>x.message.trim()).map(x=>({key:x.id,text:x.message,source:"Private feedback",created:x.created_at,requested:Boolean(x.contact_requested&&!x.contacted_at&&!closed(x.status)),status:x.status,analysis:classify(x),href:`${base}?range=${days}&section=inbox#item-${x.id}`})),...pr.filter(x=>x.comment?.trim()).map(x=>({key:x.id,text:x.comment!,source:"Google review",created:x.google_created_at,requested:false,status:x.reply_comment?"Replied":"Reply needed",analysis:classifyComment(x.comment!,x.rating),href:`${base}?range=${days}&source=google#review-${x.id}`}))];
   const previousComments=[...previousF.map(classify),...previousR.filter(x=>x.comment?.trim()).map(x=>classifyComment(x.comment!,x.rating))];

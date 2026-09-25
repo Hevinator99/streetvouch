@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 import { adminAllowed,db,json,sameOrigin } from "../../_shared";
 import { emailOutcome } from "../../../../lib/operator";
-import { buildWeeklyReport, type WeeklyMetricSet, type WeeklyReportInput } from "../../../../lib/weekly-report";
+import { buildWeeklyReport, feedbackNeedsAttention, type AttentionFeedback, type WeeklyMetricSet, type WeeklyReportInput } from "../../../../lib/weekly-report";
 import { fallbackAnalysis } from "../../../ai-engine";
 
 type Row=Record<string,any>;
@@ -27,19 +27,21 @@ function analysisSummary(rows:Row[],feedback:Row[],reviews:Row[]){
 
 async function reportInput(database:ReturnType<typeof db>,business:Row,periodStart:string,periodEnd:string):Promise<WeeklyReportInput>{
   const previousStart=new Date(new Date(periodStart).getTime()-(new Date(periodEnd).getTime()-new Date(periodStart).getTime())).toISOString();
-  const [currentEvents,previousEvents,currentFeedback,previousFeedback,currentReviews,previousReviews,outstanding,analysisRows]=await Promise.all([
+  const [currentEvents,previousEvents,currentFeedback,previousFeedback,currentReviews,previousReviews,openFeedback,reviewReplies,analysisRows]=await Promise.all([
     database.prepare("SELECT event_type,COUNT(*) count FROM events WHERE business_id=? AND created_at>=? AND created_at<? GROUP BY event_type").bind(business.id,periodStart,periodEnd).all<Row>(),
     database.prepare("SELECT event_type,COUNT(*) count FROM events WHERE business_id=? AND created_at>=? AND created_at<? GROUP BY event_type").bind(business.id,previousStart,periodStart).all<Row>(),
     database.prepare("SELECT id,message,severity,contact_requested FROM feedback WHERE business_id=? AND created_at>=? AND created_at<? ORDER BY created_at DESC LIMIT 100").bind(business.id,periodStart,periodEnd).all<Row>(),
     database.prepare("SELECT COUNT(*) count FROM feedback WHERE business_id=? AND created_at>=? AND created_at<?").bind(business.id,previousStart,periodStart).first<Row>(),
     database.prepare("SELECT id,reviewer_name,rating,comment FROM google_reviews WHERE business_id=? AND google_created_at>=? AND google_created_at<? ORDER BY google_created_at DESC LIMIT 100").bind(business.id,periodStart,periodEnd).all<Row>(),
     database.prepare("SELECT COUNT(*) count,AVG(rating) average FROM google_reviews WHERE business_id=? AND google_created_at>=? AND google_created_at<?").bind(business.id,previousStart,periodStart).first<Row>(),
-    database.prepare("SELECT SUM(CASE WHEN contact_requested=1 AND contacted_at IS NULL AND status NOT IN ('resolved','archived') THEN 1 ELSE 0 END) waiting,SUM(CASE WHEN severity!='normal' AND status NOT IN ('resolved','archived') THEN 1 ELSE 0 END) flagged,(SELECT COUNT(*) FROM google_reviews WHERE business_id=? AND reply_status!='published') review_replies FROM feedback WHERE business_id=?").bind(business.id,business.id).first<Row>(),
+    database.prepare("SELECT message,status,severity,contact_requested,contacted_at,due_at FROM feedback WHERE business_id=? AND status NOT IN ('resolved','archived')").bind(business.id).all<AttentionFeedback>(),
+    database.prepare("SELECT COUNT(*) count FROM google_reviews WHERE business_id=? AND reply_comment IS NULL AND reply_status!='published'").bind(business.id).first<Row>(),
     database.prepare("SELECT source_type,source_id,sentiment,themes FROM ai_analyses WHERE business_id=? AND created_at>=? AND created_at<? ORDER BY created_at DESC LIMIT 200").bind(business.id,periodStart,periodEnd).all<Row>(),
   ]);
   const currentReviewSummary={count:currentReviews.results.length,average:currentReviews.results.length?currentReviews.results.reduce((sum,row)=>sum+Number(row.rating),0)/currentReviews.results.length:null};
+  const open=openFeedback.results,waiting=open.filter(row=>row.contact_requested&&!row.contacted_at).length,flagged=open.filter(row=>row.severity!=="normal").length,otherAttention=open.filter(row=>feedbackNeedsAttention(row,periodEnd)&&!(row.contact_requested&&!row.contacted_at)&&row.severity==="normal").length,reviewsAwaitingReply=Number(reviewReplies?.count??0),attentionCount=open.filter(row=>feedbackNeedsAttention(row,periodEnd)).length+reviewsAwaitingReply;
   const current=metrics(eventCounts(currentEvents.results),currentFeedback.results.length,currentReviewSummary),previous=metrics(eventCounts(previousEvents.results),Number(previousFeedback?.count??0),previousReviews),analysis=analysisSummary(analysisRows.results,currentFeedback.results,currentReviews.results);
-  return{businessName:String(business.name),businessSlug:String(business.slug),periodStart,periodEnd,current,previous,awaitingContact:Number(outstanding?.waiting??0),flagged:Number(outstanding?.flagged??0),reviewsAwaitingReply:Number(outstanding?.review_replies??0),feedback:currentFeedback.results.map(row=>({message:String(row.message),severity:String(row.severity),contactRequested:Boolean(row.contact_requested)})),reviews:currentReviews.results.map(row=>({comment:row.comment?String(row.comment):null,rating:Number(row.rating),reviewerName:row.reviewer_name?String(row.reviewer_name):null})),themes:analysis.themes,sentiment:analysis.sentiment,sentimentAnalysed:analysis.analysedCount};
+  return{businessName:String(business.name),businessSlug:String(business.slug),periodStart,periodEnd,current,previous,awaitingContact:waiting,flagged,reviewsAwaitingReply,attentionCount,otherAttention,feedback:currentFeedback.results.map(row=>({message:String(row.message),severity:String(row.severity),contactRequested:Boolean(row.contact_requested)})),reviews:currentReviews.results.map(row=>({comment:row.comment?String(row.comment):null,rating:Number(row.rating),reviewerName:row.reviewer_name?String(row.reviewer_name):null})),themes:analysis.themes,sentiment:analysis.sentiment,sentimentAnalysed:analysis.analysedCount};
 }
 
 export async function POST(request:Request){
@@ -54,7 +56,7 @@ export async function POST(request:Request){
   if(!recipient||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient))return json({message:"Add a valid report recipient to the business details."},400);
   const periodStart=delivery?.period_start??new Date(Date.now()-7*86400000).toISOString(),periodEnd=delivery?.period_end??now;
   const input=await reportInput(database,business,periodStart,periodEnd),report=buildWeeklyReport(input);
-  const snapshot=JSON.stringify({...input.current,awaitingContact:input.awaitingContact,flagged:input.flagged,reviewsAwaitingReply:input.reviewsAwaitingReply,sentiment:input.sentiment,themes:input.themes});
+  const snapshot=JSON.stringify({...input.current,awaitingContact:input.awaitingContact,flagged:input.flagged,reviewsAwaitingReply:input.reviewsAwaitingReply,attentionCount:input.attentionCount,otherAttention:input.otherAttention,sentiment:input.sentiment,themes:input.themes});
   const id=delivery?.id??`weekly-${business.id}-${crypto.randomUUID()}`;
   await database.prepare("INSERT OR IGNORE INTO operator_messages (id,business_id,kind,recipient,body,status,actor,created_at,updated_at) VALUES (?,?,'report',?,?,'draft',?,?,?)").bind(id,business.id,recipient,report.html,actor,now,now).run();
   const claim=await database.prepare("UPDATE operator_messages SET status='sending',body=?,updated_at=? WHERE id=? AND status IN ('draft','failed')").bind(report.html,now,id).run();
