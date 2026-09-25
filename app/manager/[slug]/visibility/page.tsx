@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getManagerSession } from "../../../manager-auth";
 import { db } from "../../../api/_shared";
 import { analyticsProperties, searchProperties, visibilityToken } from "../../../visibility-service";
@@ -27,7 +26,7 @@ export default async function Visibility({ params, searchParams }: { params: Pro
   const { slug } = await params;
   const query = await searchParams;
   const session = await getManagerSession();
-  if (!session) return <main className="sv-vis v-signin"><h1>Sign in to view Visibility</h1><Link href={`/manager/${slug}`}>Manager sign in</Link></main>;
+  if (!session) return <main className="sv-vis v-signin"><h1>Sign in to view Visibility</h1><a href={`/manager/${slug}`}>Manager sign in</a></main>;
   if (session.businessSlug !== slug) return <main className="sv-vis v-signin"><h1>Access restricted</h1></main>;
 
   const database = db(), id = session.businessId, base = `/manager/${slug}/visibility`;
@@ -93,11 +92,11 @@ export default async function Visibility({ params, searchParams }: { params: Pro
     <link rel="stylesheet" href="/visibility.css" />
     <main className="sv-dashboard sv-vis">
       <header className="sv-header">
-        <Link className="sv-brand" href={`/manager/${slug}`}><span>✓</span>streetvouch</Link>
+        <a className="sv-brand" href={`/manager/${slug}`}><span>✓</span>streetvouch</a>
         <nav aria-label="Manager navigation">
-          <Link href={`/manager/${slug}`}>Overview</Link><Link href={`/manager/${slug}?section=inbox`}>Inbox</Link>
-          <Link href={`/manager/${slug}?source=google`}>Google reviews</Link><Link href={base} aria-current="page">Visibility</Link>
-          <Link href={`/manager/${slug}?section=reports`}>Reports</Link>
+          <a href={`/manager/${slug}`}>Overview</a><a href={`/manager/${slug}?section=inbox`}>Inbox</a>
+          <a href={`/manager/${slug}?source=google`}>Google reviews</a><a href={base} aria-current="page">Visibility</a>
+          <a href={`/manager/${slug}?section=reports`}>Reports</a>
         </nav>
       </header>
       <div className="v-wrap">
@@ -105,7 +104,7 @@ export default async function Visibility({ params, searchParams }: { params: Pro
           <form method="get" className="v-period"><input type="hidden" name="view" value={view} /><label htmlFor="visibility-period">Reporting period</label><select id="visibility-period" name="days" defaultValue={days}><option value="7">7 days</option><option value="28">28 days</option><option value="90">90 days</option></select><button type="submit">Apply</button></form>
         </div>
         {query.notice && <p className="v-notice" role="status">{notices[query.notice] ?? "Status updated."}</p>}
-        <nav className="v-tabs" aria-label="Visibility views">{([["health", "Health"], ["alerts", "Alerts"], ["opportunities", "Opportunities"], ["ai", "AI Presence"]] as const).map(([key, label]) => <Link key={key} href={`${base}?view=${key}&days=${days}`} aria-current={view === key ? "page" : undefined}>{label}</Link>)}</nav>
+        <nav className="v-tabs" aria-label="Visibility views">{([["health", "Health"], ["alerts", "Alerts"], ["opportunities", "Opportunities"], ["ai", "AI Presence"]] as const).map(([key, label]) => <a key={key} href={`${base}?view=${key}&days=${days}`} aria-current={view === key ? "page" : undefined}>{label}</a>)}</nav>
 
         {view === "health" && <>
           <section className="v-grid" aria-label="Search and traffic metrics">
@@ -116,18 +115,18 @@ export default async function Visibility({ params, searchParams }: { params: Pro
             <Metric label="Analytics organic sessions" value={sessions === null ? "—" : number(sessions)} detail="Separate from Search clicks" />
           </section>
           <p className="v-muted">Data through {end}; Google may revise recent days. Blank means unavailable, not zero. Search clicks, sessions and bookings are different measures.</p>
-          <section className="v-panel"><div className="v-panel-heading"><h2>Connected sources</h2>{connection && <Link href={`${base}?configure=1&days=${days}`} className="v-configure">Choose properties</Link>}</div>
+          <section className="v-panel"><div className="v-panel-heading"><h2>Connected sources</h2>{connection && <a href={`${base}?configure=1&days=${days}`} className="v-configure">Choose properties</a>}</div>
             <div className="v-columns"><div><h3>Google Search Console</h3><p>{connection?.search_property ?? "Connect your verified website property."}</p>
-              {!connection ? <Link className="v-button" href="/api/visibility/connect">Connect Google</Link> : configuring && <form action="/api/visibility/settings" method="post"><input type="hidden" name="action" value="property" /><select name="property" aria-label="Search Console property" required defaultValue={connection.search_property ?? ""}><option value="">Select verified property</option>{properties.map(property => <option key={property} value={property}>{property}</option>)}</select><button>Save property</button></form>}
+              {!connection ? <a className="v-button" href="/api/visibility/connect">Connect Google</a> : configuring && <form action="/api/visibility/settings" method="post"><input type="hidden" name="action" value="property" /><select name="property" aria-label="Search Console property" required defaultValue={connection.search_property ?? ""}><option value="">Select verified property</option>{properties.map(property => <option key={property} value={property}>{property}</option>)}</select><button>Save property</button></form>}
             </div><div><h3>Google Analytics 4</h3><p>{connection?.analytics_property ?? "Choose a property to compare organic sessions with search clicks."}</p>
               {configuring && <form action="/api/visibility/settings" method="post"><input type="hidden" name="action" value="analytics" /><select name="property" aria-label="Analytics property" required defaultValue={connection?.analytics_property ?? ""}><option value="">Select Analytics property</option>{analytics.map(property => <option key={property.name} value={property.name}>{property.label}</option>)}</select><button>Save property</button></form>}
             </div></div>
-            {accountError && <p>Google account details could not load. <Link href="/api/visibility/connect">Reconnect Google</Link> and try again.</p>}
+            {accountError && <p>Google account details could not load. <a href="/api/visibility/connect">Reconnect Google</a> and try again.</p>}
             {connection?.search_property && <form action="/api/visibility/settings" method="post" className="v-refresh"><input type="hidden" name="action" value="refresh" /><button className="v-button">Refresh data</button><small>Last collected: {connection.last_collected_at ?? "never"}</small></form>}
             {connection?.last_error && <p>Collection issue: {connection.last_error}</p>}
           </section>
           <section className="v-panel"><h2>Website checks</h2>{health.length ? <ul>{health.map(row => <li key={row.url}><b>{row.url}</b> — {row.issue ?? "No issue found"} <small>Checked {row.checked_at.slice(0, 10)}</small></li>)}</ul> : <p>No website check has been run yet. Add your website URL in business settings and refresh visibility data.</p>}</section>
-          <section className="v-panel"><h2>Google Business Profile</h2><p>{profile?.status === "connected" ? `${profile.google_location_title ?? "Profile"} connected; reviews last synced ${profile.last_synced_at ?? "never"}.` : "Business Profile activity is unavailable until Google Business Profile is connected."}</p><p>{profile?.status === "connected" ? `${reviews?.total ?? 0} imported reviews; ${reviews?.unanswered ?? 0} awaiting reply.` : "Calls, directions, profile views and booking actions are unavailable."} <Link href={`/manager/${slug}?source=google`}>Manage reviews</Link></p><p>Hours, services and booking links need a separate profile check. StreetVouch will not change them automatically.</p></section>
+          <section className="v-panel"><h2>Google Business Profile</h2><p>{profile?.status === "connected" ? `${profile.google_location_title ?? "Profile"} connected; reviews last synced ${profile.last_synced_at ?? "never"}.` : "Business Profile activity is unavailable until Google Business Profile is connected."}</p><p>{profile?.status === "connected" ? `${reviews?.total ?? 0} imported reviews; ${reviews?.unanswered ?? 0} awaiting reply.` : "Calls, directions, profile views and booking actions are unavailable."} <a href={`/manager/${slug}?source=google`}>Manage reviews</a></p><p>Hours, services and booking links need a separate profile check. StreetVouch will not change them automatically.</p></section>
         </>}
 
         {view === "alerts" && <><section className="v-panel"><h2>Traffic alerts</h2><p>Rule: compare two complete {settings?.period_days ?? 7}-day periods; alert on a fall of at least {settings?.drop_percent ?? 40}% when the earlier period has at least {settings?.min_baseline ?? 20} visits or clicks. Latest three days are excluded.</p>{alerts.length ? alerts.map(alert => <article className="v-alert" key={alert.title}><h3>{alert.title}</h3><p>{alert.action}</p><small>Comparison period starts {alert.started} · {alert.confidence} confidence</small><details><summary>Evidence</summary><p>{alert.evidence}</p></details></article>) : <p>No substantial change supported by the available complete data. At least two full comparison periods are needed.</p>}</section>
